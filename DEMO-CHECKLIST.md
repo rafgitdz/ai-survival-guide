@@ -4,6 +4,17 @@ Quatre prompts à coller dans Claude Code, dans l'ordre. Chaque prompt utilise U
 skill ou UN agent déjà en place. Vérifie en sortie le critère "comment savoir
 que ça marche".
 
+## Socle technique (rappel pour le narratif)
+
+- **Spring Boot 3.5** + Java 21.
+- **Contract-first dur** via `openapi-generator-maven-plugin` (7.10) sur
+  `openapi/payments.yaml`. Les interfaces `PaymentsApi` / `PaymentMethodsApi`
+  et tous les DTOs sont **générés** dans `target/generated-sources/openapi/`.
+  Les `@RestController` les implémentent. Si la spec change → le build casse.
+- Talking point fort : le leak `internalAccountId` côté response **n'est plus
+  possible** parce que le generator ne crée pas un champ absent du schéma. Le
+  contract-first tue mécaniquement le drift spec/code.
+
 ---
 
 ## Pré-requis (à faire UNE fois avant le talk)
@@ -20,8 +31,8 @@ git config core.hooksPath .githooks
 # 3. Installer spectral (sinon les hooks loguent un warn et passent)
 npm install -g @stoplight/spectral-cli
 
-# 4. Vérifier que Maven démarre (premier téléchargement long)
-./mvnw -q -DskipTests package || true
+# 4. Vérifier que Maven build (génération OpenAPI + compile + tests)
+./mvnw -q clean test     # doit afficher Tests run: 2, Failures: 0
 
 # 5. Démarrer Claude Code dans le dossier
 claude
@@ -99,8 +110,8 @@ spectral lint --ruleset .spectral.yml openapi/*.yaml
 
 Le rapport DOIT contenir au minimum :
 
-- [ ] **[API3 / mass assignment]** sur `PaymentCreateRequest` (`status`, `userId`, `internalAccountId`).
-- [ ] **[API3 / leak]** : `Payment.internalAccountId` retourné mais absent de la spec.
+- [ ] **[API3 / mass assignment]** sur `PaymentCreateRequest` (`status`, `userId`, `internalAccountId`) — la spec expose ces champs, le generator les a fait remonter dans le DTO Java, le controller les consomme tels quels. Fix : retirer ces champs de la spec → la prochaine compilation régénère un DTO propre.
+- [ ] **[additionalProperties]** : `PaymentCreateRequest` a `additionalProperties: true` → le client peut injecter n'importe quel champ.
 - [ ] **[errors]** : POST `/v1/payments` renvoie 200 sur erreur métier au lieu de 422.
 - [ ] **[API2 / broken auth]** : `GET /v1/payments/{id}` a `security: []` sans justification.
 - [ ] **[API1 / BOLA]** : `GET /v1/payments/{id}` ne check pas l'ownership.

@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  pom.xml — Spring Boot minimum viable pour la démo France API 2026.
-  Inclus : web, validation, actuator, prometheus, tests RestAssured + JsonSchemaValidator
-  pour les contract tests pilotés par la spec OpenAPI.
+  pom.xml — France API 2026 demo, contract-first.
+  - Spring Boot 3.5.x (Java 21).
+  - openapi-generator-maven-plugin : génère les API interfaces + DTOs Java
+    depuis openapi/payments.yaml. Le code Java implémente les interfaces.
+  - Si la spec change → le build casse jusqu'à ce que le code colle. C'est
+    ça, contract-first au sens fort (pas seulement "discipline").
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
@@ -10,7 +13,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>3.5.0</version>
         <relativePath/>
     </parent>
 
@@ -20,6 +23,8 @@
 
     <properties>
         <java.version>21</java.version>
+        <openapi-generator.version>7.10.0</openapi-generator.version>
+        <swagger-annotations.version>2.2.22</swagger-annotations.version>
     </properties>
 
     <dependencies>
@@ -38,6 +43,13 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Requis par le code généré (annotations @Operation, @Parameter, etc.) -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations-jakarta</artifactId>
+            <version>${swagger-annotations.version}</version>
         </dependency>
 
         <dependency>
@@ -62,6 +74,52 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!--
+              OpenAPI Generator — génère les interfaces API + DTOs depuis la spec.
+              Mode interfaceOnly : on génère uniquement les interfaces Spring
+              (les @RestController sont écrits à la main et les implémentent).
+              Avantage démo : si la spec ajoute/renomme/supprime un champ, le
+              build casse, pas un test à 22h.
+            -->
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-payments-api</id>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/openapi/payments.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <apiPackage>com.franceapi.demo.generated.api</apiPackage>
+                            <modelPackage>com.franceapi.demo.generated.dto</modelPackage>
+                            <invokerPackage>com.franceapi.demo.generated</invokerPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <!-- La spec est volontairement imparfaite (200 sur erreur, etc.).
+                                 On laisse Spectral juger côté lint ; ici on désactive la
+                                 validation stricte du generator pour ne pas bloquer la démo. -->
+                            <skipValidateSpec>true</skipValidateSpec>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <useJakartaEe>true</useJakartaEe>
+                                <useTags>true</useTags>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <openApiNullable>false</openApiNullable>
+                                <dateLibrary>java8</dateLibrary>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

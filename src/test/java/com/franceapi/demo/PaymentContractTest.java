@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
@@ -17,8 +16,18 @@ import static org.hamcrest.Matchers.notNullValue;
  * Certains tests sont volontairement marqués (TODO) — ils échoueront sur la version
  * vulnérable et passeront une fois que security-audit-agent aura appliqué les patches.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                // Spring Boot désactive l'export metrics en tests par défaut
+                // (management.defaults.metrics.export.enabled=false). On le ré-active
+                // ici parce que justement on VEUT vérifier que /actuator/prometheus
+                // est exposé (AGENTS.md §7-A).
+                "management.defaults.metrics.export.enabled=true",
+                "management.prometheus.metrics.export.enabled=true",
+                "management.endpoints.web.exposure.include=health,info,prometheus,metrics"
+        }
+)
 class PaymentContractTest {
 
     @LocalServerPort int port;
