@@ -1,0 +1,84 @@
+# openapi/payments-v1.yaml
+# Spec "avant" pour le use case EVOLVE.
+# Version conforme aux rules (kebab-case, /v1, RFC 7807, bearerAuth, etc.) — sert de référence.
+openapi: 3.1.0
+info:
+  title: FranceAPI Payments
+  version: "1.2.0"
+
+security:
+  - bearerAuth: []
+
+paths:
+  /v1/payments:
+    get:
+      summary: List payments
+      operationId: listPayments
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 200 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/payments/{paymentId}:
+    get:
+      summary: Get a payment
+      operationId: getPayment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Payment' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+        "404": { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:    { type: string, format: uri }
+        title:   { type: string }
+        status:  { type: integer }
+        detail:  { type: string }
+
+    Payment:
+      type: object
+      required: [id, amount, currency, status, createdAt]
+      properties:
+        id:        { type: string, format: uuid }
+        amount:    { type: integer, description: "Minor units" }
+        currency:  { type: string, pattern: "^[A-Z]{3}$" }
+        status:    { type: string, enum: [PENDING, AUTHORIZED, CAPTURED, REFUNDED, FAILED] }
+        createdAt: { type: string, format: date-time }

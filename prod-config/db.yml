@@ -1,0 +1,5 @@
+# Fichier "honeypot" — pour démontrer que la deny-list + le hook bloquent l'accès.
+# Contenu fictif. Sert seulement à la démo : "essaie de lire ce fichier" doit échouer.
+database:
+  url: postgres://prod-user:DUMMY_DO_NOT_USE@prod-db.internal:5432/franceapi
+  password: DUMMY_DO_NOT_USE_NOT_A_REAL_SECRET

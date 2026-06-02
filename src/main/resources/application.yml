@@ -1,0 +1,27 @@
+# application.yml — config Spring Boot minimale.
+# Expose /actuator/prometheus + healthcheck (cf. AGENTS.md §7).
+server:
+  port: 8080
+
+spring:
+  application:
+    name: franceapi-demo
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Observabilité (AGENTS.md §7 — A. Metrics)
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0   # Demo : 100%. Prod réelle : 0.1.
+
+logging:
+  pattern:
+    # MDC traceId/spanId injectés pour corrélation traces/logs (AGENTS.md §7 — C).
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"

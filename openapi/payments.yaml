@@ -1,0 +1,212 @@
+# openapi/payments.yaml
+# SPEC VOLONTAIREMENT IMPARFAITE — sert aux use cases SECURE et AUDIT.
+# Les défauts plantés (résumé pour le présentateur) :
+#  [API3 / mass-assignment]  PaymentCreateRequest expose `status` et `userId` côté client.
+#  [API3 / leak]             Payment expose `internalAccountId` non documenté dans aucun example métier.
+#  [erreurs]                 POST /v1/payments renvoie 200 sur une erreur métier au lieu d'un 422 Problem.
+#  [erreurs]                 La réponse 400 n'est pas du application/problem+json.
+#  [obs]                     Aucune mention de /actuator/prometheus, pas de headers rate-limit.
+#  [naming]                  Un path est en camelCase (/v1/paymentMethods) — viole AGENTS.md §2.
+#  [auth]                    L'endpoint GET /v1/payments/{id} n'exige aucune sécurité (security: []) sans justification.
+openapi: 3.1.0
+info:
+  title: FranceAPI Payments
+  version: "1.0.0"
+  description: |
+    Démo France API 2026 — spec imparfaite à dessein.
+
+servers:
+  - url: https://api.franceapi.example.com
+
+# Sécurité appliquée globalement, mais surchargée plus bas (mauvaise pratique plantée).
+security:
+  - bearerAuth: []
+
+tags:
+  - name: payments
+  - name: paymentMethods
+
+paths:
+  /v1/payments:
+    post:
+      tags: [payments]
+      summary: Create a payment
+      operationId: createPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+      responses:
+        "200":
+          # PLANTÉ : on renvoie 200 même sur "insufficient funds". Devrait être 422.
+          description: Payment created OR business error described in body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        "400":
+          # PLANTÉ : pas du application/problem+json
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "500":
+          $ref: '#/components/responses/Internal'
+
+    get:
+      tags: [payments]
+      summary: List payments
+      operationId: listPayments
+      # PLANTÉ : pas de pagination → API4 Unrestricted Resource Consumption
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/payments/{paymentId}:
+    get:
+      tags: [payments]
+      summary: Get a payment
+      operationId: getPayment
+      # PLANTÉ : security: [] sans justification → endpoint sensible exposé sans auth (API2)
+      security: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # PLANTÉ : naming camelCase au lieu de kebab-case → /v1/payment-methods
+  /v1/paymentMethods:
+    get:
+      tags: [paymentMethods]
+      summary: List payment methods
+      operationId: listPaymentMethods
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethod'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/unauthorized"
+            title: "Unauthorized"
+            status: 401
+            detail: "Missing or invalid bearer token."
+            instance: "/v1/payments"
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/not-found"
+            title: "Not Found"
+            status: 404
+            detail: "Payment 7d3... not found."
+            instance: "/v1/payments/7d3..."
+    Internal:
+      description: Internal Server Error
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/internal"
+            title: "Internal Server Error"
+            status: 500
+            detail: "Unexpected error."
+            instance: "/v1/payments"
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:     { type: string, format: uri }
+        title:    { type: string }
+        status:   { type: integer }
+        detail:   { type: string }
+        instance: { type: string }
+
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:   { type: integer, description: "Minor units (e.g. cents)." }
+        currency: { type: string, pattern: "^[A-Z]{3}$" }
+
+    PaymentCreateRequest:
+      # PLANTÉ : mass assignment — `status`, `userId` et `internalAccountId` ne doivent JAMAIS être en input.
+      type: object
+      required: [amount, currency]
+      additionalProperties: true   # PLANTÉ : doit être false
+      properties:
+        amount:            { type: integer }
+        currency:          { type: string }
+        status:            { type: string, enum: [PENDING, AUTHORIZED, CAPTURED, REFUNDED] }
+        userId:            { type: string, format: uuid }
+        internalAccountId: { type: string }
+
+    Payment:
+      type: object
+      required: [id, amount, currency, status, createdAt]
+      properties:
+        id:                { type: string, format: uuid }
+        amount:            { type: integer }
+        currency:          { type: string }
+        status:            { type: string, enum: [PENDING, AUTHORIZED, CAPTURED, REFUNDED, FAILED] }
+        createdAt:         { type: string, format: date-time }
+        # internalAccountId est RETOURNÉ par le contrôleur mais ABSENT ici → mismatch (API3 + spec incohérente)
+      example:
+        id: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+        amount: 1999
+        currency: "EUR"
+        status: "AUTHORIZED"
+        createdAt: "2026-06-02T10:15:00Z"
+
+    PaymentMethod:
+      type: object
+      properties:
+        id:    { type: string }
+        type:  { type: string, enum: [CARD, SEPA, PAYPAL] }
+        label: { type: string }

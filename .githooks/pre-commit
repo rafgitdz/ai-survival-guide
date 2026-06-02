@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit — vrai hook git côté humain.
+# Active avec : git config core.hooksPath .githooks
+# Mêmes vérifications que le hook Claude PreToolUse (defense in depth).
+
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+if ls openapi/*.yaml >/dev/null 2>&1 && command -v spectral >/dev/null 2>&1; then
+  for spec in openapi/*.yaml; do
+    spectral lint --ruleset .spectral.yml --fail-severity=error "$spec" || {
+      echo "[git pre-commit] spectral failed on $spec" >&2
+      exit 1
+    }
+  done
+fi
+
+if [ -f ./mvnw ]; then
+  ./mvnw -q -Dtest='*ContractTest' test || {
+    echo "[git pre-commit] contract tests failed" >&2
+    exit 1
+  }
+fi
+
+exit 0

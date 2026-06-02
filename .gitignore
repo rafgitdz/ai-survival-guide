@@ -1,0 +1,7 @@
+target/
+.idea/
+*.iml
+.DS_Store
+.claude/settings.local.json
+.claude/tmp/
+docs/audits/

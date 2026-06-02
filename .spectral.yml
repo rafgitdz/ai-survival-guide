@@ -1,0 +1,47 @@
+# .spectral.yml — ruleset Spectral exécuté par les hooks pre-commit / pre-merge.
+# Reflète les règles dures de AGENTS.md.
+extends:
+  - spectral:oas
+
+rules:
+  # --- AGENTS.md §2 naming ---
+  paths-kebab-case:
+    description: Paths must be kebab-case (AGENTS.md §2).
+    message: "Path '{{property}}' is not kebab-case."
+    severity: error
+    given: $.paths
+    then:
+      field: "@key"
+      function: pattern
+      functionOptions:
+        match: "^(\\/[a-z0-9]+(-[a-z0-9]+)*|\\/v[0-9]+|\\/\\{[a-zA-Z0-9]+\\})+$"
+
+  # --- AGENTS.md §3 versioning ---
+  paths-must-be-versioned:
+    description: All paths must start with /v{n} (AGENTS.md §3).
+    message: "Path '{{property}}' must start with /v{n}."
+    severity: error
+    given: $.paths
+    then:
+      field: "@key"
+      function: pattern
+      functionOptions:
+        match: "^/v[0-9]+/"
+
+  # --- AGENTS.md §5 errors RFC 7807 ---
+  error-responses-must-be-problem-json:
+    description: 4xx/5xx responses must use application/problem+json (AGENTS.md §5).
+    severity: error
+    given: $.paths..responses[?(@property.match(/^[45][0-9]{2}$/))].content
+    then:
+      field: "application/problem+json"
+      function: truthy
+
+  # --- AGENTS.md §6 mass assignment ---
+  request-bodies-no-additional-properties:
+    description: Request bodies must not allow additionalProperties (AGENTS.md §6 — anti mass-assignment).
+    severity: error
+    given: $.paths..requestBody.content..schema
+    then:
+      field: "additionalProperties"
+      function: falsy
