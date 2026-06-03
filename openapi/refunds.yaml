@@ -1,0 +1,329 @@
+# openapi/refunds.yaml
+# Spec OpenAPI pour la ressource Refund (ticket API-1247).
+# Conforme AGENTS.md :
+#   §2 kebab-case + camelCase JSON
+#   §3 path /v1, classification Semver = MINOR (nouveau endpoint, aucun champ existant cassé)
+#   §4 bearerAuth global, pas d'override security: []
+#   §5 erreurs RFC 7807 strict avec exemples pour 400/401/403/404/409/422/500
+#   §6 noms business (amount/currency) — choix validé avec produit ;
+#      la couche service mappe vers refunds.amount_cents / refunds.currency_iso (cf. db/schema.sql)
+#   §7 /actuator/prometheus exposé (cf. application Spring Boot)
+#   §8 rate limiting documenté via X-RateLimit-* headers
+openapi: 3.1.0
+info:
+  title: FranceAPI Refunds
+  version: "1.0.0"
+  description: |
+    Création de remboursements (totaux ou partiels) sur un paiement existant.
+    Ressource introduite par le ticket API-1247.
+
+servers:
+  - url: https://api.franceapi.example.com
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: refunds
+    description: Operations on payment refunds.
+
+paths:
+  /v1/refunds:
+    post:
+      tags: [refunds]
+      summary: Create a refund
+      description: |
+        Crée un remboursement total ou partiel d'un paiement existant.
+
+        Règles métier :
+          - Le paiement source doit être en statut `CAPTURED`.
+          - Si `amount` est absent, le remboursement porte sur le montant total restant.
+          - Si `amount` est fourni, il doit être strictement positif et la somme
+            cumulée des remboursements ne peut pas dépasser le montant du paiement.
+
+        La devise est héritée du paiement source — elle n'est jamais acceptée en entrée.
+      operationId: createRefund
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundCreateRequest'
+            examples:
+              partial:
+                summary: Partial refund
+                value:
+                  paymentId: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+                  amount: 500
+                  reason: "Customer requested partial refund on damaged item."
+              full:
+                summary: Full refund (amount omitted)
+                value:
+                  paymentId: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+                  reason: "Order cancelled before shipment."
+      responses:
+        "201":
+          description: Refund created.
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/XRateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/XRateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/XRateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+              example:
+                id: "b1d2c3e4-5f67-4890-a1b2-c3d4e5f60001"
+                paymentId: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+                amount: 500
+                currency: "EUR"
+                status: "PENDING"
+                createdAt: "2026-06-03T09:42:11Z"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          $ref: '#/components/responses/Conflict'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/Internal'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT validé côté serveur (signature + `exp` + `iss` + `aud`).
+
+  headers:
+    XRateLimitLimit:
+      description: Total number of requests allowed in the current window.
+      schema: { type: integer, example: 100 }
+    XRateLimitRemaining:
+      description: Number of requests remaining in the current window.
+      schema: { type: integer, example: 87 }
+    XRateLimitReset:
+      description: Unix timestamp (seconds) at which the rate-limit window resets.
+      schema: { type: integer, example: 1748945000 }
+
+  responses:
+    BadRequest:
+      description: Malformed request (invalid JSON, missing required fields, bad types).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/bad-request"
+            title: "Bad Request"
+            status: 400
+            detail: "Field 'paymentId' is required and must be a valid UUID."
+            instance: "/v1/refunds"
+
+    Unauthorized:
+      description: Missing or invalid bearer token.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/unauthorized"
+            title: "Unauthorized"
+            status: 401
+            detail: "Missing or invalid bearer token."
+            instance: "/v1/refunds"
+
+    Forbidden:
+      description: Authenticated caller is not allowed to refund this payment.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/forbidden"
+            title: "Forbidden"
+            status: 403
+            detail: "Caller is not authorized to refund payment 8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001."
+            instance: "/v1/refunds"
+
+    NotFound:
+      description: The referenced payment does not exist.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/payment-not-found"
+            title: "Payment Not Found"
+            status: 404
+            detail: "Payment 8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001 does not exist."
+            instance: "/v1/refunds"
+
+    Conflict:
+      description: |
+        Business state conflict — either the payment is not in status `CAPTURED`,
+        or the cumulative refunded amount would exceed the payment's amount.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            notCaptured:
+              summary: Payment is not in CAPTURED status
+              value:
+                type: "https://api.franceapi.example.com/errors/payment-not-refundable"
+                title: "Payment Not Refundable"
+                status: 409
+                detail: "Payment 8f1c0b62-... is in status AUTHORIZED; only CAPTURED payments can be refunded."
+                instance: "/v1/refunds"
+            amountExceeded:
+              summary: Cumulative refund amount would exceed payment amount
+              value:
+                type: "https://api.franceapi.example.com/errors/refund-amount-exceeded"
+                title: "Refund Amount Exceeded"
+                status: 409
+                detail: "Requested refund (500) plus already-refunded (1700) exceeds payment amount (1999)."
+                instance: "/v1/refunds"
+
+    UnprocessableEntity:
+      description: Semantic validation failure on input (e.g. `amount` not strictly positive).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/invalid-amount"
+            title: "Invalid Amount"
+            status: 422
+            detail: "Field 'amount' must be strictly greater than 0 when provided."
+            instance: "/v1/refunds"
+
+    TooManyRequests:
+      description: Rate limit exceeded.
+      headers:
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/XRateLimitLimit'
+        X-RateLimit-Remaining:
+          $ref: '#/components/headers/XRateLimitRemaining'
+        X-RateLimit-Reset:
+          $ref: '#/components/headers/XRateLimitReset'
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema: { type: integer, example: 30 }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/rate-limited"
+            title: "Too Many Requests"
+            status: 429
+            detail: "Rate limit exceeded for this client."
+            instance: "/v1/refunds"
+
+    Internal:
+      description: Unexpected server error.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/internal"
+            title: "Internal Server Error"
+            status: 500
+            detail: "Unexpected error."
+            instance: "/v1/refunds"
+
+  schemas:
+    Problem:
+      type: object
+      description: RFC 7807 Problem Details object.
+      required: [type, title, status]
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference identifying the problem type.
+        title:
+          type: string
+          description: Short, human-readable summary of the problem type.
+        status:
+          type: integer
+          description: HTTP status code generated by the origin server.
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence.
+        instance:
+          type: string
+          description: A URI reference identifying the specific occurrence.
+
+    RefundCreateRequest:
+      type: object
+      description: |
+        Input payload to create a refund. Only client-controllable fields are accepted —
+        `id`, `status`, `currency`, `createdAt` are never accepted on input (mass-assignment guard).
+      required: [paymentId]
+      additionalProperties: false
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+          description: Identifier of the payment to refund. Must reference an existing payment in status `CAPTURED`.
+        amount:
+          type: integer
+          minimum: 1
+          description: |
+            Amount to refund, in minor units of the payment's currency (e.g. cents for EUR).
+            If omitted, the full remaining refundable amount is used.
+        reason:
+          type: string
+          maxLength: 280
+          description: Optional free-text reason for the refund (max 280 characters).
+
+    Refund:
+      type: object
+      description: A refund created against a payment.
+      required: [id, paymentId, amount, currency, status, createdAt]
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Server-generated refund identifier.
+        paymentId:
+          type: string
+          format: uuid
+          description: Identifier of the source payment.
+        amount:
+          type: integer
+          minimum: 1
+          description: Refunded amount, in minor units of `currency`.
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          description: ISO 4217 currency code, inherited from the source payment.
+        status:
+          type: string
+          enum: [PENDING, SUCCEEDED, FAILED]
+          description: |
+            Lifecycle state of the refund:
+              - `PENDING`   : accepted, awaiting downstream settlement.
+              - `SUCCEEDED` : refund settled successfully.
+              - `FAILED`    : refund could not be settled.
+        createdAt:
+          type: string
+          format: date-time
+          description: Server-assigned creation timestamp (UTC, RFC 3339).
+      example:
+        id: "b1d2c3e4-5f67-4890-a1b2-c3d4e5f60001"
+        paymentId: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+        amount: 500
+        currency: "EUR"
+        status: "PENDING"
+        createdAt: "2026-06-03T09:42:11Z"
