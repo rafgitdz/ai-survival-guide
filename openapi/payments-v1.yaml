@@ -1,7 +1,6 @@
 # openapi/payments-v1.yaml
 # Spec "avant" pour le use case EVOLVE.
 # Version conforme aux rules (kebab-case, /v1, RFC 7807, bearerAuth, etc.) — sert de référence.
-# DEPRECATED : /v1/payments* est en sunset au 2026-09-01. Migrer vers /v2/payments*.
 openapi: 3.1.0
 info:
   title: FranceAPI Payments
@@ -15,7 +14,6 @@ paths:
     get:
       summary: List payments
       operationId: listPayments
-      deprecated: true
       parameters:
         - name: limit
           in: query
@@ -23,13 +21,6 @@ paths:
       responses:
         "200":
           description: OK
-          headers:
-            Deprecation:
-              $ref: '#/components/headers/Deprecation'
-            Sunset:
-              $ref: '#/components/headers/Sunset'
-            Link:
-              $ref: '#/components/headers/Link'
           content:
             application/json:
               schema:
@@ -42,7 +33,6 @@ paths:
     get:
       summary: Get a payment
       operationId: getPayment
-      deprecated: true
       parameters:
         - name: paymentId
           in: path
@@ -51,13 +41,6 @@ paths:
       responses:
         "200":
           description: OK
-          headers:
-            Deprecation:
-              $ref: '#/components/headers/Deprecation'
-            Sunset:
-              $ref: '#/components/headers/Sunset'
-            Link:
-              $ref: '#/components/headers/Link'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Payment' }
@@ -67,28 +50,6 @@ paths:
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
-
-  headers:
-    Deprecation:
-      description: >
-        Signals that this endpoint is deprecated (RFC 8594).
-        Clients SHOULD migrate to the successor version.
-      schema:
-        type: boolean
-        example: true
-    Sunset:
-      description: >
-        Date after which this endpoint will be removed (RFC 8594, HTTP-date format).
-        After 2026-09-01 this path will return 410 Gone.
-      schema:
-        type: string
-        example: "Sun, 01 Sep 2026 00:00:00 GMT"
-    Link:
-      description: >
-        Link to the successor version of this resource (RFC 5988).
-      schema:
-        type: string
-        example: '</v2/payments>; rel="successor-version"'
 
   responses:
     Unauthorized:

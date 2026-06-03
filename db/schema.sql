@@ -29,7 +29,6 @@ CREATE INDEX idx_payments_status   ON payments(status);
 -- avant merge (cf. AGENTS.md §6 — jamais inventer un schéma sans validation).
 -- Choix de nommage : colonnes en snake_case + suffixes techniques
 -- (`amount_cents`, `currency_iso`) pour rester cohérent avec la table `payments`.
--- L'API expose les noms business (`amount`, `currency`) — voir openapi/refunds.yaml.
 
 CREATE TABLE refunds (
     id            UUID         PRIMARY KEY,
