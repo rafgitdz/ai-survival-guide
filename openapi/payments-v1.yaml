@@ -1,10 +1,16 @@
 # openapi/payments-v1.yaml
-# Spec "avant" pour le use case EVOLVE.
-# Version conforme aux rules (kebab-case, /v1, RFC 7807, bearerAuth, etc.) — sert de référence.
+# DEPRECATED — superseded by openapi/payments-v2.yaml (v2.0.0) under /v2.
+# Sunset date : 2026-12-03 (6 mois). Migrer vers /v2 avant cette date.
+# Cf. CHANGELOG.md section [1.2.0 — DEPRECATED].
 openapi: 3.1.0
 info:
   title: FranceAPI Payments
   version: "1.2.0"
+  description: |
+    **DEPRECATED.** This version is scheduled for removal on **2026-12-03**.
+    Migrate to `/v2/payments` (see `openapi/payments-v2.yaml`).
+    Responses include `Deprecation: true`, `Sunset: Thu, 03 Dec 2026 00:00:00 GMT`
+    and `Link: </v2/payments>; rel="successor-version"` headers.
 
 security:
   - bearerAuth: []
@@ -14,6 +20,9 @@ paths:
     get:
       summary: List payments
       operationId: listPayments
+      deprecated: true
+      description: |
+        **DEPRECATED.** Use `GET /v2/payments` instead. Sunset on 2026-12-03.
       parameters:
         - name: limit
           in: query
@@ -33,6 +42,9 @@ paths:
     get:
       summary: Get a payment
       operationId: getPayment
+      deprecated: true
+      description: |
+        **DEPRECATED.** Use `GET /v2/payments/{paymentId}` instead. Sunset on 2026-12-03.
       parameters:
         - name: paymentId
           in: path

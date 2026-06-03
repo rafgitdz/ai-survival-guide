@@ -1,23 +1,21 @@
 # openapi/payments-v2.yaml
-# Spec "après" pour le use case EVOLVE.
-# CONTIENT DES BREAKING CHANGES VOLONTAIRES — sert à démontrer breaking-change-detector :
-#   1. `amount` est renommé en `value` dans Payment           → MAJOR (rename)
+# Spec v2 publiée sous /v2 — bump MAJOR (Semver) suite au rapport breaking-change-detector :
+#   1. `amount` renommé en `value` dans Payment                → MAJOR (rename)
 #   2. `currency` passe de string libre à un enum restreint    → MAJOR (type/constraint change)
-#   3. `createdAt` est supprimé                                → MAJOR (removal)
-#   4. Nouveau query param `status` sur GET /v1/payments       → MINOR (optional add)
-#   5. Format d'erreur 404 enrichi avec un champ `code`        → PATCH/MINOR (additive)
-# Le path est toujours /v1/... bien que le bump soit MAJOR — c'est exactement le piège
-# que le detector doit révéler (il faut publier sous /v2).
+#   3. `createdAt` supprimé                                    → MAJOR (removal)
+#   4. Nouveau query param `status` sur GET /v2/payments       → MINOR (optional add)
+#   5. Champ `code` ajouté à Problem                           → MINOR (additive optional response field)
+# Cf. CHANGELOG.md [2.0.0] et /v1 deprecated avec sunset.
 openapi: 3.1.0
 info:
   title: FranceAPI Payments
-  version: "1.3.0"   # PLANTÉ : devrait être 2.0.0 puisqu'il y a des MAJOR
+  version: "2.0.0"
 
 security:
   - bearerAuth: []
 
 paths:
-  /v1/payments:
+  /v2/payments:
     get:
       summary: List payments
       operationId: listPayments
@@ -38,8 +36,10 @@ paths:
                 items:
                   $ref: '#/components/schemas/Payment'
         "401": { $ref: '#/components/responses/Unauthorized' }
+        "403": { $ref: '#/components/responses/Forbidden' }
+        "500": { $ref: '#/components/responses/Internal' }
 
-  /v1/payments/{paymentId}:
+  /v2/payments/{paymentId}:
     get:
       summary: Get a payment
       operationId: getPayment
@@ -54,24 +54,81 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Payment' }
+        "400": { $ref: '#/components/responses/BadRequest' }
         "401": { $ref: '#/components/responses/Unauthorized' }
+        "403": { $ref: '#/components/responses/Forbidden' }
         "404": { $ref: '#/components/responses/NotFound' }
+        "500": { $ref: '#/components/responses/Internal' }
 
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
 
   responses:
+    BadRequest:
+      description: Malformed request (invalid path parameter, bad query value, etc.).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/bad-request"
+            title: "Bad Request"
+            status: 400
+            detail: "Path parameter 'paymentId' must be a valid UUID."
+            instance: "/v2/payments/not-a-uuid"
+            code: "BAD_REQUEST"
+
     Unauthorized:
-      description: Unauthorized
+      description: Missing or invalid bearer token.
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/unauthorized"
+            title: "Unauthorized"
+            status: 401
+            detail: "Missing or invalid bearer token."
+            instance: "/v2/payments"
+            code: "UNAUTHORIZED"
+
+    Forbidden:
+      description: Authenticated caller is not allowed to access this resource.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/forbidden"
+            title: "Forbidden"
+            status: 403
+            detail: "Caller is not authorized to access payment 8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001."
+            instance: "/v2/payments/8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+            code: "FORBIDDEN"
+
     NotFound:
-      description: Not Found
+      description: The referenced payment does not exist.
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/payment-not-found"
+            title: "Payment Not Found"
+            status: 404
+            detail: "Payment 8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001 does not exist."
+            instance: "/v2/payments/8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+            code: "PAYMENT_NOT_FOUND"
+
+    Internal:
+      description: Unexpected server error.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/internal"
+            title: "Internal Server Error"
+            status: 500
+            detail: "Unexpected error."
+            instance: "/v2/payments"
+            code: "INTERNAL"
 
   schemas:
     Problem:
