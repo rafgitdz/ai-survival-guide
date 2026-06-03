@@ -20,8 +20,17 @@
       "Read(./openapi/**)",
       "Read(./src/**)",
       "Read(./tickets/**)",
+      "Read(./db/**)",
+      "Read(./docs/**)",
+      "Read(./README.md)",
       "Edit(./openapi/**)",
       "Edit(./src/**)",
+      "Edit(./db/**)",
+      "Edit(./docs/**)",
+      "Edit(./README.md)",
+      "Write(./db/**)",
+      "Write(./docs/**)",
+      "Write(./README.md)",
       "Bash(./mvnw:*)",
       "Bash(spectral:*)",
       "Bash(git diff:*)",
@@ -36,7 +45,8 @@
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-openapi.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-merge-diff.sh" }
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-merge-diff.sh" },
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-docs-check.sh" }
         ]
       },
       {

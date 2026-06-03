@@ -29,9 +29,15 @@ fail() {
 }
 
 # 1) Spectral lint sur toutes les specs OpenAPI sous openapi/
+# NOTE: openapi/payments.yaml est volontairement imparfaite (use cases SECURE
+# et AUDIT). Elle est exclue du lint bloquant — les défauts plantés sont
+# justement ce que la démo doit faire trouver.
 if ls openapi/*.yaml >/dev/null 2>&1; then
   if command -v spectral >/dev/null 2>&1; then
     for spec in openapi/*.yaml; do
+      case "$spec" in
+        openapi/payments.yaml) continue ;;
+      esac
       if ! spectral lint --ruleset .spectral.yml --fail-severity=error "$spec" >/tmp/spectral.out 2>&1; then
         cat /tmp/spectral.out >&2
         fail "spectral lint failed on $spec"

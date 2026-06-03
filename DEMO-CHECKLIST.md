@@ -49,27 +49,49 @@ Vérification rapide que Claude voit bien tout :
 
 ## Use case 1 — DESIGN (skill `openapi-designer`)
 
+**Narratif** : un ticket produit demande un nouvel endpoint. L'agent traduit
+en contrat OpenAPI conforme aux rules. **Mais** il rencontre un schéma de
+données existant (`db/schema.sql`) qui ne s'aligne pas parfaitement avec le
+ticket. Au lieu d'inventer, il **s'arrête et te demande**. C'est la matérialisation
+d'`AGENTS.md §6` : *"jamais supposer un schéma DB sans le lire"*.
+
 **Prompt à coller :**
 
-> Lis le ticket `tickets/API-1247.md`. Utilise le skill `openapi-designer` pour
-> drafter la spec OpenAPI correspondante, à ajouter dans `openapi/payments.yaml`
-> (ou un nouveau fichier `openapi/refunds.yaml`, à toi de juger). Respecte les
-> rules de `AGENTS.md`. Ne génère PAS de code Java.
+> Lis le ticket `tickets/API-1247.md`. Utilise le skill `openapi-designer`
+> pour drafter la spec OpenAPI correspondante. Respecte AGENTS.md. Ne génère
+> PAS de code Java.
+
+**Ce qui DOIT se passer (séquence) :**
+
+1. Claude lit `AGENTS.md`, `tickets/API-1247.md`, la spec existante `openapi/payments.yaml`.
+2. Claude lit **spontanément** `db/schema.sql` (forcé par le step 3 du skill workflow).
+3. Claude détecte deux mismatches et la table manquante, puis **s'arrête et pose les questions** :
+   - "Ticket dit `amount`, DB dit `amount_cents` (BIGINT, minor units). J'expose lequel dans le contrat ?"
+   - "Ticket dit `currency`, DB dit `currency_iso` (CHAR 3). Idem ?"
+   - "La table `refunds` n'existe pas. Je propose un DDL dans `db/schema-refunds.sql`, ou tu en as un quelque part ?"
+4. Tu réponds en live : *"noms business (`amount`, `currency`). Propose le DDL refunds."*
+5. Claude reprend : draft `POST /v1/refunds` conforme + propose le DDL.
 
 **Comment vérifier que ça a marché :**
 
-- [ ] Claude a lu `AGENTS.md` et `tickets/API-1247.md`.
-- [ ] Une nouvelle section `paths: /v1/refunds:` apparaît dans un fichier YAML.
-- [ ] Le path est en kebab-case, pluriel.
-- [ ] Schémas distincts pour `RefundCreateRequest` et `Refund`.
-- [ ] Les codes 404 / 409 / 422 sont présents avec exemples RFC 7807.
-- [ ] Un classement Semver est annoncé (devrait être `MINOR`).
+- [ ] Claude a posé **au moins une** question avant de drafter (n'a pas inventé).
+- [ ] La spec finale expose `amount` et `currency` (pas les noms DB) — typage cohérent avec la DB (uuid, integer minor units).
+- [ ] Path `/v1/refunds` en kebab-case pluriel.
+- [ ] Schémas distincts `RefundCreateRequest` et `Refund` (anti mass-assignment).
+- [ ] Codes 404 / 409 / 422 présents avec exemples `application/problem+json`.
 - [ ] `additionalProperties: false` sur `RefundCreateRequest`.
+- [ ] Classement Semver annoncé (`MINOR`).
+- [ ] (bonus) Un fichier `db/schema-refunds.sql` proposé en complément.
 
-Test optionnel :
+**Test machine optionnel :**
 ```bash
 spectral lint --ruleset .spectral.yml openapi/*.yaml
 ```
+
+**Plan B si Claude n'ose pas poser de question** (timide en live) : tu le
+relances explicitement : *"avant de drafter, scanne `db/` comme demandé par
+ton SKILL.md step 3"*. Le moment "il pose la question" est le cœur de la démo,
+ne le sacrifie pas.
 
 ---
 
@@ -149,6 +171,35 @@ Pour `obs-readiness-checker` :
 - [ ] B. Tracing : **MISSING** (pas de bridge OTel dans `pom.xml` — c'est l'amélioration à demander en live).
 - [ ] C. Logs structurés : **MISSING** (pas de `logstash-logback-encoder`, pas de `structured.format`).
 - [ ] Verdict : `FAIL`.
+
+---
+
+## Bonus moment — `docs-curator` (hook auto-orchestrant)
+
+Pendant n'importe lequel des 4 use cases, quand Claude finit ses modifs et veut
+commiter, le hook `pre-commit-docs-check.sh` détecte que le commit touche un
+fichier significatif (spec, AGENTS.md, hook, skill, agent, pom, .mcp.json,
+schema DB) **sans qu'aucun ADR ne soit staged** → **exit 2**.
+
+Claude voit le message stderr, **invoque le skill `docs-curator`**, qui :
+
+1. Lit le diff staged.
+2. Drafte un `docs/adr/NNNN-<slug>.md` (template MADR : Context, Decision,
+   Consequences, Alternatives, Links).
+3. Amende `README.md` (section `Decisions` au minimum).
+4. Stage les nouveaux fichiers.
+5. Stoppe.
+
+Claude relance le `git commit` — cette fois le hook passe (ADR détecté).
+
+**Phrase à dire** : *"Le hook ne se contente plus de bloquer. Il **orchestre**
+l'agent pour qu'il fasse le boulot de doc qu'il aurait sauté. La rule
+'tout changement significatif s'explique' devient auto-applicable."*
+
+**Comment vérifier** :
+- [ ] `ls docs/adr/` montre un nouveau fichier `NNNN-*.md`.
+- [ ] `README.md` section `Decisions` contient un lien vers le nouvel ADR.
+- [ ] Le `git log` final montre **un seul** commit avec spec + ADR + README ensemble.
 
 ---
 

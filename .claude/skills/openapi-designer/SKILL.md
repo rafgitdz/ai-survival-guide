@@ -30,7 +30,13 @@ Tirées de `AGENTS.md` :
 
 1. **Lire le ticket / la demande.** Extraire : ressource, opérations attendues, contraintes métier, format des identifiants.
 2. **Lire la spec existante** (`openapi/*.yaml`) pour réutiliser les composants (`Problem`, `Money`, `Pagination`, etc.) et garder le style cohérent.
-3. **Si un schéma DB est mentionné**, le lire avant de définir les DTOs (rule #6). Ne jamais inventer un champ.
+3. **Inspecter la couche données AVANT de drafter** (AGENTS.md §6). Scanner **systématiquement**, même si le ticket n'en parle pas :
+   - `db/schema.sql`, `db/migration/`, `src/main/resources/db/migration/` (Flyway/Liquibase).
+   - Toute classe `*Entity.java`, `*Repository.java` (JPA).
+   Si une table liée à la ressource du ticket existe :
+   - **Réconcilier les noms** ticket vs DB. Mismatch (ex: `amount` vs `amount_cents`, `currency` vs `currency_iso`) → **STOP, poser la question à l'humain** : *"j'expose le nom business ou le nom technique ?"*. Ne jamais trancher seul.
+   - **Réutiliser les types** (`UUID` → `format: uuid`, `TIMESTAMPTZ` → `format: date-time`, `BIGINT minor units` → `integer`).
+   Si la table N'existe pas mais que le ticket en dépend : **STOP**, proposer un DDL en complément OU demander si elle existe ailleurs. **Jamais inventer un schéma.**
 4. **Drafter la spec** :
    - Path en `kebab-case` pluriel.
    - Chaque opération : `summary`, `operationId` en camelCase, `tags`, `security`, `parameters`, `requestBody` (si applicable), `responses`.

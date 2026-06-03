@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 # .githooks/pre-commit — vrai hook git côté humain.
 # Active avec : git config core.hooksPath .githooks
-# Mêmes vérifications que le hook Claude PreToolUse (defense in depth).
+# Symétrique aux hooks Claude (defense in depth), avec une nuance :
+#   - lint + contract tests = BLOQUANTS (comme le hook Claude).
+#   - docs check = WARN-only (on ne force pas un humain à invoquer Claude).
 
-set -euo pipefail
+set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
+# -------- 1) Spectral (bloquant) --------
+# NOTE: openapi/payments.yaml est volontairement imparfaite (use cases SECURE
+# et AUDIT). Elle est exclue du lint bloquant — les defauts plantes sont
+# justement ce que la demo doit faire trouver.
 if ls openapi/*.yaml >/dev/null 2>&1 && command -v spectral >/dev/null 2>&1; then
   for spec in openapi/*.yaml; do
+    case "$spec" in
+      openapi/payments.yaml) continue ;;
+    esac
     spectral lint --ruleset .spectral.yml --fail-severity=error "$spec" || {
       echo "[git pre-commit] spectral failed on $spec" >&2
       exit 1
@@ -16,11 +25,38 @@ if ls openapi/*.yaml >/dev/null 2>&1 && command -v spectral >/dev/null 2>&1; the
   done
 fi
 
+# -------- 2) Contract tests (bloquant) --------
 if [ -f ./mvnw ]; then
   ./mvnw -q -Dtest='*ContractTest' test || {
     echo "[git pre-commit] contract tests failed" >&2
     exit 1
   }
+fi
+
+# -------- 3) Docs check (WARN-only) --------
+# Si le commit touche un fichier "significatif" sans ADR/README staged, on
+# AVERTIT seulement — on ne bloque pas un dev qui sait ce qu'il fait.
+STAGED="$(git diff --staged --name-only)"
+significant=0
+docs=0
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    openapi/*.yaml|openapi/*.yml|AGENTS.md|.claude/agents/*|.claude/skills/*|.claude/hooks/*|.claude/commands/*|.mcp.json|pom.xml|db/*.sql|.spectral.yml)
+      significant=1 ;;
+    docs/adr/[0-9]*-*.md|README.md)
+      docs=1 ;;
+  esac
+done <<< "$STAGED"
+
+if [ "$significant" = "1" ] && [ "$docs" = "0" ]; then
+  cat >&2 <<EOF
+[git pre-commit] WARN — commit touches significant files but no ADR/README update is staged.
+
+Consider documenting the rationale before merging (see .claude/skills/docs-curator/SKILL.md).
+This is a warning only, the commit will proceed. Use Claude (\`/audit\` or natural prompt)
+to invoke the docs-curator skill if you want auto-drafting.
+EOF
 fi
 
 exit 0
