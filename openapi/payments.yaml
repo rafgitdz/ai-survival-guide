@@ -1,5 +1,4 @@
 # openapi/payments.yaml
-# SPEC VOLONTAIREMENT IMPARFAITE — sert aux use cases SECURE et AUDIT.
 # Les défauts plantés (résumé pour le présentateur) :
 #  [API3 / mass-assignment]  PaymentCreateRequest expose `status` et `userId` côté client.
 #  [API3 / leak]             Payment expose `internalAccountId` non documenté dans aucun example métier.
