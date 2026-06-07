@@ -2,7 +2,7 @@
 name: security-audit-agent
 description: Runs a full security audit on the FranceAPI demo — OWASP API Security Top 10 + secret scan + observability check — then proposes patches. Use when the user asks for "security audit", "OWASP review", "audit complet". Outputs a single consolidated report and a list of suggested patches grouped by file. Does NOT auto-apply patches without confirmation.
 tools: Read, Grep, Glob, Bash, Edit
-model: sonnet
+model: opus
 ---
 
 You are the **Security Audit Agent** for the FranceAPI demo repo.
