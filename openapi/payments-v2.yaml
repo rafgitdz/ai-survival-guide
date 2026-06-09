@@ -1,23 +1,36 @@
 # openapi/payments-v2.yaml
-# Spec "après" pour le use case EVOLVE.
-# CONTIENT DES BREAKING CHANGES VOLONTAIRES — sert à démontrer breaking-change-detector :
-#   1. `amount` est renommé en `value` dans Payment           → MAJOR (rename)
-#   2. `currency` passe de string libre à un enum restreint    → MAJOR (type/constraint change)
-#   3. `createdAt` est supprimé                                → MAJOR (removal)
-#   4. Nouveau query param `status` sur GET /v1/payments       → MINOR (optional add)
-#   5. Format d'erreur 404 enrichi avec un champ `code`        → PATCH/MINOR (additive)
-# Le path est toujours /v1/... bien que le bump soit MAJOR — c'est exactement le piège
-# que le detector doit révéler (il faut publier sous /v2).
+# Contrat v2 officiel de FranceAPI Payments.
+#
+# v2 introduit des breaking changes vis-à-vis de v1 (cf. CHANGELOG.md, entrée [2.0.0]).
+# Synthèse pédagogique des changements pour les intégrateurs :
+#   1. Payment.amount est renommé en Payment.value (réponse).
+#   2. Payment.currency est restreint à l'enum [EUR, USD, GBP] (réponse).
+#   3. Payment.createdAt est supprimé (réponse) et retiré de required[].
+#   4. Les ressources sont désormais servies sous /v2/payments (au lieu de /v1/payments).
+#   5. Ajouts additifs : query param optionnel `status` sur GET /v2/payments,
+#      champ optionnel `code` sur Problem.
+#
+# v1 reste exposée en parallèle, mais marquée deprecated (Sunset : 2026-12-08).
 openapi: 3.1.0
 info:
   title: FranceAPI Payments
-  version: "1.3.0"   # PLANTÉ : devrait être 2.0.0 puisqu'il y a des MAJOR
+  version: "2.0.0"
+  description: |
+    Version 2 du contrat Payments.
+
+    Cette version introduit des breaking changes par rapport à v1 (rename de champ,
+    restriction d'enum, suppression de `createdAt`, nouveau préfixe `/v2`).
+    Consulter CHANGELOG.md (entrée [2.0.0]) pour la liste exhaustive et le guide
+    de migration. La v1 reste disponible jusqu'à la date de Sunset (2026-12-08).
+
+servers:
+  - url: https://api.franceapi.example.com
 
 security:
   - bearerAuth: []
 
 paths:
-  /v1/payments:
+  /v2/payments:
     get:
       summary: List payments
       operationId: listPayments
@@ -39,7 +52,7 @@ paths:
                   $ref: '#/components/schemas/Payment'
         "401": { $ref: '#/components/responses/Unauthorized' }
 
-  /v1/payments/{paymentId}:
+  /v2/payments/{paymentId}:
     get:
       summary: Get a payment
       operationId: getPayment

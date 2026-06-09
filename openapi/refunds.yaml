@@ -1,0 +1,274 @@
+# openapi/refunds.yaml
+# Spec issue du ticket API-1247 (POST /v1/refunds).
+# Naming aligné sur la DB (cf. db/schema.sql) : amountCents / currencyIso,
+# choix validé avec le produit pour rester traçable de bout en bout.
+openapi: 3.1.0
+info:
+  title: FranceAPI Refunds
+  version: "1.0.0"
+  description: |
+    API de remboursement des paiements FranceAPI.
+    Source de vérité contractuelle — toute évolution doit passer par cette spec
+    avant le code (cf. AGENTS.md §1, §9).
+
+servers:
+  - url: https://api.franceapi.example.com
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: refunds
+    description: Création et suivi des remboursements de paiements capturés.
+
+paths:
+  /v1/refunds:
+    post:
+      tags: [refunds]
+      summary: Create a refund for an existing captured payment
+      description: |
+        Crée un remboursement total ou partiel d'un paiement existant.
+        Si `amountCents` est absent, le remboursement est total (montant restant
+        à rembourser sur le paiement source).
+      operationId: createRefund
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundCreateRequest'
+            examples:
+              partial:
+                summary: Remboursement partiel avec motif
+                value:
+                  paymentId: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+                  amountCents: 500
+                  reason: "Client returned one item out of two."
+              full:
+                summary: Remboursement total (amountCents omis)
+                value:
+                  paymentId: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+      responses:
+        "201":
+          description: Refund created.
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+              example:
+                id: "b1d7e3a4-2c1f-4f9a-8c3d-1a2b3c4d5e6f"
+                paymentId: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+                amountCents: 500
+                currencyIso: "EUR"
+                status: "PENDING"
+                reason: "Client returned one item out of two."
+                createdAt: "2026-06-07T10:15:00Z"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          $ref: '#/components/responses/Conflict'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "500":
+          $ref: '#/components/responses/Internal'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  headers:
+    RateLimitLimit:
+      description: Nombre total de requêtes autorisées sur la fenêtre courante.
+      schema: { type: integer }
+    RateLimitRemaining:
+      description: Nombre de requêtes restantes sur la fenêtre courante.
+      schema: { type: integer }
+    RateLimitReset:
+      description: Timestamp Unix (secondes) auquel la fenêtre de rate limit est réinitialisée.
+      schema: { type: integer }
+
+  responses:
+    BadRequest:
+      description: Bad Request — JSON malformé ou champ requis manquant.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/bad-request"
+            title: "Bad Request"
+            status: 400
+            detail: "Field 'paymentId' is required."
+            instance: "/v1/refunds"
+    Unauthorized:
+      description: Unauthorized — bearer token manquant ou invalide.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/unauthorized"
+            title: "Unauthorized"
+            status: 401
+            detail: "Missing or invalid bearer token."
+            instance: "/v1/refunds"
+    Forbidden:
+      description: Forbidden — l'appelant n'est pas autorisé à rembourser ce paiement.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/forbidden"
+            title: "Forbidden"
+            status: 403
+            detail: "Caller is not allowed to refund payment 8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001."
+            instance: "/v1/refunds"
+    NotFound:
+      description: Not Found — `paymentId` inconnu.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/payment-not-found"
+            title: "Payment Not Found"
+            status: 404
+            detail: "Payment 8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001 does not exist."
+            instance: "/v1/refunds"
+    Conflict:
+      description: |
+        Conflict — le paiement source n'est pas en statut `CAPTURED`,
+        ou la somme des remboursements dépasserait le montant du paiement.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/refund-not-allowed"
+            title: "Refund Not Allowed"
+            status: 409
+            detail: "Payment 8f1c0b62-... is in status AUTHORIZED; only CAPTURED payments can be refunded."
+            instance: "/v1/refunds"
+    UnprocessableEntity:
+      description: Unprocessable Entity — `amountCents` ≤ 0 ou autre règle métier non respectée.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/invalid-amount"
+            title: "Invalid Amount"
+            status: 422
+            detail: "Field 'amountCents' must be strictly greater than 0."
+            instance: "/v1/refunds"
+    Internal:
+      description: Internal Server Error.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: "https://api.franceapi.example.com/errors/internal"
+            title: "Internal Server Error"
+            status: 500
+            detail: "Unexpected error."
+            instance: "/v1/refunds"
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI stable identifiant le type d'erreur.
+        title:
+          type: string
+          description: Libellé court et lisible du type d'erreur.
+        status:
+          type: integer
+          description: Code HTTP associé.
+        detail:
+          type: string
+          description: Explication contextualisée de l'occurrence.
+        instance:
+          type: string
+          description: URI de l'occurrence (chemin de la requête).
+
+    RefundCreateRequest:
+      type: object
+      description: |
+        Payload d'entrée — uniquement les champs modifiables par le client.
+        `id`, `status`, `currencyIso` (hérité du paiement source) et `createdAt`
+        sont volontairement exclus pour empêcher tout mass assignment
+        (cf. AGENTS.md §6).
+      additionalProperties: false
+      required: [paymentId]
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+          description: Identifiant du paiement à rembourser. Doit exister et être `CAPTURED`.
+        amountCents:
+          type: integer
+          format: int64
+          minimum: 1
+          description: |
+            Montant à rembourser en minor units (centimes). Si absent, remboursement total
+            du montant restant. Doit être strictement supérieur à 0 si fourni.
+        reason:
+          type: string
+          maxLength: 280
+          description: Motif libre du remboursement, à des fins d'audit.
+
+    Refund:
+      type: object
+      required: [id, paymentId, amountCents, currencyIso, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identifiant unique du remboursement.
+        paymentId:
+          type: string
+          format: uuid
+          description: Identifiant du paiement source.
+        amountCents:
+          type: integer
+          format: int64
+          description: Montant remboursé en minor units (centimes).
+        currencyIso:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          description: Devise ISO 4217 héritée du paiement source.
+        status:
+          type: string
+          enum: [PENDING, SUCCEEDED, FAILED]
+          description: Statut courant du remboursement.
+        reason:
+          type: string
+          maxLength: 280
+          description: Motif fourni à la création, le cas échéant.
+        createdAt:
+          type: string
+          format: date-time
+          description: Date de création du remboursement (UTC, ISO 8601).
+      example:
+        id: "b1d7e3a4-2c1f-4f9a-8c3d-1a2b3c4d5e6f"
+        paymentId: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
+        amountCents: 500
+        currencyIso: "EUR"
+        status: "PENDING"
+        reason: "Client returned one item out of two."
+        createdAt: "2026-06-07T10:15:00Z"
