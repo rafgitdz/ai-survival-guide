@@ -1,0 +1,55 @@
+// .pochi/config.jsonc — config Pochi scope projet (versionné dans git).
+// Format JSONC : les commentaires sont autorisés (// et /* */).
+// Pour user-scope (perso, non versionné), copier les entrées dans ~/.pochi/config.jsonc.
+//
+// Quatre serveurs MCP : tickets (style Jira), git, lecture de schéma DB,
+// contract-test-runner. Les commandes/URLs ci-dessous sont des EXEMPLES
+// branchables — remplacer par les vraies cibles avant prod.
+{
+  "mcp": {
+
+    // Serveur MCP qui expose les tickets style Jira.
+    // Remplacer JIRA_BASE_URL et JIRA_TOKEN par les vraies valeurs (via env, jamais hardcodé).
+    "tickets": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything-tickets"],
+      "env": {
+        "JIRA_BASE_URL": "${JIRA_BASE_URL:-https://franceapi.example.atlassian.net}",
+        "JIRA_TOKEN": "${JIRA_TOKEN:-REPLACE_ME}"
+      }
+    },
+
+    // Serveur MCP officiel pour git — lecture historique, diffs, blame.
+    // En lecture seule pour la démo (no commit via MCP).
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "."]
+    },
+
+    // Serveur MCP de lecture du schéma DB (DDL only, pas de data).
+    // Utilisé par openapi-designer et owasp-reviewer pour ne JAMAIS inventer
+    // un champ (cf. AGENTS.md §6).
+    "db-schema": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres-readonly"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL:-postgres://demo:demo@localhost:5432/franceapi_demo}",
+        "READ_ONLY": "true",
+        "SCHEMA_ONLY": "true"
+      }
+    },
+
+    // Serveur MCP maison qui expose 'run_contract_tests' lançant mvnw test
+    // sur la suite *ContractTest et retournant un rapport structuré.
+    // Le binaire référencé ici est un placeholder : remplacer par la vraie implem.
+    "contract-test-runner": {
+      "command": "node",
+      "args": ["./mcp/contract-test-runner/index.js"],
+      "env": {
+        "MAVEN_OPTS": "-Xmx1g",
+        "TEST_PATTERN": "*ContractTest"
+      }
+    }
+
+  }
+}
