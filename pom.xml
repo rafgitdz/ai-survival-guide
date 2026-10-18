@@ -23,7 +23,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <openapi-generator.version>7.10.0</openapi-generator.version>
+        <openapi-generator.version>7.26.0</openapi-generator.version>
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
     </properties>
 
