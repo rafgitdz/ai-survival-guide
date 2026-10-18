@@ -20,7 +20,7 @@
 ## Build stack
 
 - **Maven** (versioned `./mvnw` wrapper).
-- **openapi-generator-maven-plugin 7.10** in `interfaceOnly` mode, on `openapi/payments.yaml` only.
+- **openapi-generator-maven-plugin 7.26** in `interfaceOnly` mode, on `openapi/payments.yaml` only.
   - Phase: `generate-sources`.
   - Output: `target/generated-sources/openapi/src/main/java/com/franceapi/demo/generated/{api,dto}/`.
   - Key settings: `useSpringBoot3=true`, `useJakartaEe=true`, `useTags=true`, `skipDefaultInterface=true`, `openApiNullable=false`, `dateLibrary=java8`, `skipValidateSpec=true` (the spec is deliberately flawed for the demo).
