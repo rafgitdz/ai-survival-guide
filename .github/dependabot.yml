@@ -4,6 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # The demo and its recordings target Spring Boot 3.5: a major bump is a
+      # deliberate migration, not a weekly update.
+      - dependency-name: org.springframework.boot:spring-boot-starter-parent
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
