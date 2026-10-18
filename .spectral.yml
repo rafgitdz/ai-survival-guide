@@ -1,5 +1,5 @@
-# .spectral.yml — ruleset Spectral exécuté par les hooks pre-commit / pre-merge.
-# Reflète les règles dures de AGENTS.md.
+# .spectral.yml: Spectral ruleset run by the pre-commit and pre-merge hooks.
+# Mirrors the hard rules of AGENTS.md.
 extends:
   - spectral:oas
 
@@ -39,7 +39,7 @@ rules:
 
   # --- AGENTS.md §6 mass assignment ---
   request-bodies-no-additional-properties:
-    description: Request bodies must not allow additionalProperties (AGENTS.md §6 — anti mass-assignment).
+    description: Request bodies must not allow additionalProperties (AGENTS.md §6, anti mass-assignment).
     severity: error
     given: $.paths..requestBody.content..schema
     then:

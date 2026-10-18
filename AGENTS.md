@@ -1,72 +1,72 @@
 <!--
-  AGENTS.md — Règles universelles pour ce repo.
-  Lu automatiquement par Claude Code (et tout autre outil compatible AGENTS.md).
-  Toute génération de code, toute proposition d'agent, tout review DOIT respecter ces règles.
-  Si une règle est en conflit avec une demande utilisateur, l'agent doit le signaler avant d'agir.
+  AGENTS.md: universal rules for this repository.
+  Loaded automatically by Claude Code (and by any tool that supports AGENTS.md).
+  Every code generation, every agent proposal and every review MUST follow these rules.
+  If a rule conflicts with a user request, the agent must say so before acting.
 -->
 
-# Rules — FranceAPI Demo (Spring Boot + OpenAPI)
+# Rules: contract-first payments API (Spring Boot + OpenAPI)
 
-## 1. Stack & style
+## 1. Stack and style
 
-- **Stack** : Spring Boot 3.x, Java 21, OpenAPI 3.1, Maven.
-- **Style API** : REST, **contract-first** — la spec OpenAPI est la source de vérité, le code Java est généré ou validé par rapport à elle. Jamais le code en premier.
+- **Stack**: Spring Boot 3.x, Java 21, OpenAPI 3.1, Maven.
+- **API style**: REST, **contract-first**. The OpenAPI spec is the source of truth; Java code is generated from it or validated against it. Never code first.
 
-## 2. Conventions de nommage
+## 2. Naming conventions
 
-- **Paths** : `kebab-case`, **pluriel** pour les collections.
+- **Paths**: `kebab-case`, **plural** for collections.
   - ✅ `/payment-methods`, `/invoices/{invoiceId}/line-items`
   - ❌ `/PaymentMethod`, `/invoice/{id}/lineItem`
-- **Properties JSON** : `camelCase`.
+- **JSON properties**: `camelCase`.
   - ✅ `customerId`, `createdAt`
   - ❌ `customer_id`, `CreatedAt`
-- **Enums** : `SCREAMING_SNAKE_CASE` côté valeur (`PAYMENT_PENDING`).
+- **Enums**: `SCREAMING_SNAKE_CASE` values (`PAYMENT_PENDING`).
 
 ## 3. Versioning
 
-- **`/v1`, `/v2`, ...** dans le path. Pas de header de version.
-- **Semver strict** sur la spec :
-  - PATCH : doc, examples, descriptions.
-  - MINOR : nouveau endpoint, nouveau champ optionnel.
-  - MAJOR : **toute** suppression / renommage / changement de type / changement d'obligation (optional→required) / changement d'enum / changement de format d'erreur.
-- **Aucun breaking change ne peut sortir sans bump majeur** ET sans entrée dans `CHANGELOG.md`.
+- **`/v1`, `/v2`, ...** in the path. No version header.
+- **Strict semver** on the spec:
+  - PATCH: docs, examples, descriptions.
+  - MINOR: new endpoint, new optional field.
+  - MAJOR: **any** removal, rename, type change, requirement change (optional to required), enum change or error format change.
+- **No breaking change ships without a major bump** AND an entry in `CHANGELOG.md`.
 
-## 4. Authentification
+## 4. Authentication
 
-- **JWT Bearer** (`Authorization: Bearer ...`), validé côté serveur (signature + `exp` + `iss` + `aud`).
-- Spec : `securitySchemes.bearerAuth` doit être déclaré et appliqué par défaut à toutes les opérations sauf endpoints publics explicitement annotés `security: []`.
+- **JWT Bearer** (`Authorization: Bearer ...`), validated server-side (signature + `exp` + `iss` + `aud`).
+- Spec: `securitySchemes.bearerAuth` must be declared and applied by default to every operation, except public endpoints explicitly annotated with `security: []`.
 
-## 5. Erreurs
+## 5. Errors
 
-- **RFC 7807** (`application/problem+json`) — strict.
-- Chaque opération **DOIT** déclarer ses réponses 4xx/5xx pertinentes avec **schéma `Problem` + un exemple réaliste**.
-- Codes minimum à considérer pour toute mutation : `400`, `401`, `403`, `404` (si ressource), `409` (si conflit possible), `422` (validation métier), `500`.
-- Jamais de `200 OK` sur une erreur métier. Jamais de body d'erreur custom hors RFC 7807.
+- **RFC 7807** (`application/problem+json`), strictly.
+- Every operation **MUST** declare its relevant 4xx/5xx responses with the **`Problem` schema and a realistic example**.
+- Minimum codes to consider for any mutation: `400`, `401`, `403`, `404` (if a resource is addressed), `409` (if a conflict is possible), `422` (business validation), `500`.
+- Never `200 OK` on a business error. Never a custom error body outside RFC 7807.
 
-## 6. Honnêteté du contrat
+## 6. Contract honesty
 
-- **Jamais inventer un champ.** Si un champ apparaît dans une réponse, il DOIT figurer dans le schéma.
-- **Jamais supposer un schéma de base de données.** Avant de modéliser un DTO, lire la migration / l'entité JPA / le schéma SQL réel.
-- Pas de mass assignment : les DTOs d'entrée n'exposent que les champs modifiables par le client. `id`, `status`, `createdAt`, `userId` (si dérivé du JWT), etc. ne sont **jamais** acceptés en input direct.
+- **Never invent a field.** If a field appears in a response, it MUST be in the schema.
+- **Never assume a database schema.** Before modeling a DTO, read the actual migration, JPA entity or SQL schema.
+- No mass assignment: input DTOs expose only the fields the client may change. `id`, `status`, `createdAt`, `userId` (when derived from the JWT), etc. are **never** accepted as direct input.
 
-## 7. Observabilité (non négociable)
+## 7. Observability (non-negotiable)
 
-Toute API exposée DOIT, à la livraison :
+Every exposed API MUST ship with:
 
-- **Métriques Prometheus** : `/actuator/prometheus` exposé, `http_server_requests_seconds` actif via Micrometer.
-- **Traces distribuées** : propagation `traceparent` (W3C), export OTLP ou Zipkin configuré.
-- **Logs structurés** : JSON, champs minimum `timestamp`, `level`, `traceId`, `spanId`, `service`, `message`. Pas de log de PII ni de secret.
+- **Prometheus metrics**: `/actuator/prometheus` exposed, `http_server_requests_seconds` enabled through Micrometer.
+- **Distributed tracing**: W3C `traceparent` propagation, OTLP or Zipkin export configured.
+- **Structured logs**: JSON, with at least `timestamp`, `level`, `traceId`, `spanId`, `service`, `message`. Never log PII or secrets.
 
-## 8. Sécurité — garde-fous obligatoires
+## 8. Security: mandatory guardrails
 
-- Pas de secret en clair dans le repo (cf. skill `secret-scrubber`).
-- Validation d'entrée systématique (Bean Validation `@Valid`).
-- OWASP API Security Top 10 audité avant chaque release (cf. agent `security-audit-agent`).
-- Rate limiting documenté dans la spec (`X-RateLimit-*` headers).
+- No plaintext secret in the repository (see the `secret-scrubber` skill).
+- Systematic input validation (Bean Validation, `@Valid`).
+- OWASP API Security Top 10 audited before every release (see the `security-audit-agent` agent).
+- Rate limiting documented in the spec (`X-RateLimit-*` headers).
 
-## 9. Workflow attendu des agents
+## 9. Expected agent workflow
 
-1. Lire la spec OpenAPI concernée avant de proposer un changement de code.
-2. Si on ajoute / modifie un endpoint : **mettre à jour la spec en premier**, puis le code, puis les tests.
-3. Toujours produire le diff de spec si la spec change.
-4. Tout PR doit passer : `spectral lint`, contract tests, OWASP review, obs check.
+1. Read the relevant OpenAPI spec before proposing any code change.
+2. When adding or changing an endpoint: **update the spec first**, then the code, then the tests.
+3. Always produce the spec diff when the spec changes.
+4. Every PR must pass: `spectral lint`, contract tests, OWASP review, observability check.

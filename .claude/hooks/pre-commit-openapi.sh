@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # pre-commit-openapi.sh
-# Déclenché par PreToolUse quand Claude s'apprête à exécuter `git commit ...`.
-# Rôle : refuser le commit si la spec OpenAPI ne passe pas spectral OU si les
-#        contract tests échouent.
+# Triggered by PreToolUse when Claude is about to run `git commit ...`.
+# Role: refuse the commit if the OpenAPI spec fails Spectral OR if the
+#       contract tests fail.
 #
-# Le hook reçoit sur stdin un JSON Claude Code:
+# The hook receives a Claude Code JSON on stdin:
 #   { "tool_name": "Bash", "tool_input": { "command": "..." }, ... }
-# On regarde si la commande est un `git commit`. Sinon on passe.
+# Check whether the command is a `git commit`. Otherwise let it through.
 #
-# Code de sortie 2 = bloquant (Claude voit le message stderr).
+# Exit code 2 = blocking (Claude reads the stderr message).
 # Code 0 = OK.
 
 set -uo pipefail
@@ -16,7 +16,7 @@ set -uo pipefail
 INPUT="$(cat)"
 CMD="$(printf '%s' "$INPUT" | jq -r '.tool_input.command // ""')"
 
-# On filtre : seuls les `git commit` (pas `git status`, `git log`, ...).
+# Filter: `git commit` only (not `git status`, `git log`, ...).
 if ! printf '%s' "$CMD" | grep -Eq '^[[:space:]]*git[[:space:]]+commit\b'; then
   exit 0
 fi
@@ -28,10 +28,10 @@ fail() {
   exit 2
 }
 
-# 1) Spectral lint sur toutes les specs OpenAPI sous openapi/
-# NOTE: openapi/payments.yaml est volontairement imparfaite (use cases SECURE
-# et AUDIT). Elle est exclue du lint bloquant — les défauts plantés sont
-# justement ce que la démo doit faire trouver.
+# 1) Spectral lint on every OpenAPI spec under openapi/
+# NOTE: openapi/payments.yaml is deliberately flawed (SECURE and AUDIT use
+# cases). It is excluded from the blocking lint: the planted defects are
+# exactly what the demo must surface.
 if ls openapi/*.yaml >/dev/null 2>&1; then
   if command -v spectral >/dev/null 2>&1; then
     for spec in openapi/*.yaml; do

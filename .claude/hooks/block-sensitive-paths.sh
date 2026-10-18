@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # block-sensitive-paths.sh
-# Déclenché par PreToolUse sur les outils Read/Edit/Write/MultiEdit/Bash.
-# Rôle : interdire tout accès aux dossiers `prod-config/` et `secrets/`
-#        (et fichiers .env, *.pem, *.key).
+# Triggered by PreToolUse on the Read/Edit/Write/MultiEdit/Bash tools.
+# Role: deny any access to the `prod-config/` and `secrets/` folders
+#       (and to .env, *.pem, *.key files).
 #
-# Politique : DENY-LIST (defense in depth). Les permissions natives Claude Code
-# devraient déjà bloquer, mais on double avec ce hook pour la démo.
+# Policy: DENY-LIST (defense in depth). Claude Code's native permissions
+# should already block these, but this hook doubles them for the demo.
 
 set -uo pipefail
 
 INPUT="$(cat)"
 TOOL="$(printf '%s' "$INPUT" | jq -r '.tool_name // ""')"
 
-# Récupère un "candidat chemin" selon l'outil
+# Extract a "candidate path" depending on the tool
 PATHS=""
 case "$TOOL" in
   Read|Edit|Write|MultiEdit|NotebookEdit)

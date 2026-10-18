@@ -1,27 +1,27 @@
 {
-  "_comment": "MCP servers — scope projet (versionné). Quatre serveurs : tickets (style Jira), git, DB schema reader, contract test runner. Les commandes/URLs ci-dessous sont des EXEMPLES branchables — remplacer par les vraies cibles avant prod. Pour user-scope (perso, non versionné), copier l'entrée dans ~/.claude.json.",
+  "_comment": "MCP servers, project scope (versioned). Four servers: tickets (Jira-like), git, DB schema reader, contract test runner. The commands and URLs below are pluggable EXAMPLES: replace them with real targets before production. For user scope (personal, not versioned), copy the entry into ~/.claude.json.",
 
   "mcpServers": {
     "tickets": {
-      "_comment": "Serveur MCP qui expose les tickets style Jira. Ici on prend un serveur HTTP générique via mcp-remote. Remplacer JIRA_BASE_URL et JIRA_TOKEN par les vraies valeurs (via env, jamais hardcodé).",
+      "_comment": "MCP server exposing Jira-like tickets. Placeholder package: replace it with your ticketing MCP server. Provide JIRA_BASE_URL and JIRA_TOKEN through the environment, never hard-coded.",
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-everything-tickets"],
       "env": {
-        "JIRA_BASE_URL": "${JIRA_BASE_URL:-https://franceapi.example.atlassian.net}",
+        "JIRA_BASE_URL": "${JIRA_BASE_URL:-https://your-company.example.atlassian.net}",
         "JIRA_TOKEN": "${JIRA_TOKEN:-REPLACE_ME}"
       }
     },
 
     "git": {
-      "_comment": "Serveur MCP officiel pour git — lecture historique, diffs, blame. En lecture seule pour la démo (no commit via MCP).",
+      "_comment": "Official git MCP server: history, diffs, blame. Read-only for the demo (no commit through MCP).",
       "type": "stdio",
       "command": "uvx",
       "args": ["mcp-server-git", "--repository", "."]
     },
 
     "db-schema": {
-      "_comment": "Serveur MCP de lecture du schéma DB (DDL only, pas de data). Utilisé par openapi-designer et owasp-reviewer pour ne JAMAIS inventer un champ (cf. AGENTS.md §6).",
+      "_comment": "MCP server reading the database schema (DDL only, no data). Used by openapi-designer and owasp-reviewer so that they NEVER invent a field (see AGENTS.md §6). Placeholder package: replace it with a read-only Postgres MCP server.",
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-postgres-readonly"],
@@ -33,7 +33,7 @@
     },
 
     "contract-test-runner": {
-      "_comment": "Serveur MCP maison qui expose un outil 'run_contract_tests' lancant mvnw test sur la suite *ContractTest et retournant un rapport structuré. Le binaire référencé ici est un placeholder : remplacer par la vraie implem.",
+      "_comment": "In-house MCP server exposing a 'run_contract_tests' tool that runs mvnw test on the *ContractTest suite and returns a structured report. The referenced binary is a placeholder: replace it with the real implementation.",
       "type": "stdio",
       "command": "node",
       "args": ["./mcp/contract-test-runner/index.js"],

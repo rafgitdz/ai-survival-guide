@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # pre-commit-docs-check.sh
 #
-# Hook PreToolUse — matché sur Bash quand la commande est `git commit ...`.
+# PreToolUse hook, matched on Bash when the command is `git commit ...`.
 #
-# Rôle : si le commit touche un fichier "significatif" (cf. liste ci-dessous)
-# SANS qu'aucun ADR (docs/adr/*.md) ni README.md ne soit également staged,
-# on bloque et on demande à Claude d'invoquer le skill `docs-curator`.
+# Role: if the commit touches a "significant" file (see the list below)
+# WITHOUT any ADR (docs/adr/*.md) or README.md staged as well, block and
+# ask Claude to invoke the `docs-curator` skill.
 #
-# Le skill va lire le diff, drafter un ADR + amender le README, stage les
-# fichiers, puis Claude relance le commit — ce hook passera car la 2ème
-# exécution verra l'ADR staged.
+# The skill reads the diff, drafts an ADR, amends the README and stages the
+# files; Claude then runs the commit again, and this hook passes because the
+# second run sees the staged ADR.
 #
-# Anti-boucle : si le diff staged ne contient QUE des fichiers de doc
-# (`docs/adr/**` ou `README.md`), on laisse passer sans rien demander.
+# Loop guard: if the staged diff contains ONLY documentation files
+# (`docs/adr/**` or `README.md`), let it through without asking anything.
 #
-# Code de sortie 2 = bloquant (Claude voit le message stderr et agit).
+# Exit code 2 = blocking (Claude reads the stderr message and acts on it).
 # Code 0 = OK.
 
 set -uo pipefail
@@ -22,26 +22,26 @@ set -uo pipefail
 INPUT="$(cat)"
 CMD="$(printf '%s' "$INPUT" | jq -r '.tool_input.command // ""')"
 
-# On filtre : seuls les `git commit`.
+# Filter: `git commit` only.
 if ! printf '%s' "$CMD" | grep -Eq '^[[:space:]]*git[[:space:]]+commit\b'; then
   exit 0
 fi
 
 cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || exit 0
 
-# Pas dans un repo git → on ne peut rien vérifier, on passe.
+# Not in a git repository: nothing to check, let it through.
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
   exit 0
 fi
 
 STAGED="$(git diff --staged --name-only)"
 
-# Aucun fichier staged → laisse passer (git refusera tout seul).
+# No staged file: let it through (git refuses on its own).
 if [ -z "$STAGED" ]; then
   exit 0
 fi
 
-# Liste des patterns "significatifs" — DOIT rester en miroir avec
+# "Significant" patterns: MUST stay in sync with
 # .claude/skills/docs-curator/SKILL.md (section "What counts as significant").
 is_significant() {
   case "$1" in
@@ -86,23 +86,23 @@ while IFS= read -r f; do
   if ! is_doc "$f"; then ONLY_DOCS=0; fi
 done <<< "$STAGED"
 
-# Anti-boucle : si on ne commit QUE de la doc (le skill vient de poser
-# l'ADR + README), on laisse passer.
+# Loop guard: if only documentation is committed (the skill has just added
+# the ADR + README), let it through.
 if [ "$ONLY_DOCS" = "1" ]; then
   exit 0
 fi
 
-# Pas de changement significatif → on n'a rien à exiger.
+# No significant change: nothing to require.
 if [ "$HAS_SIGNIFICANT" = "0" ]; then
   exit 0
 fi
 
-# Significatif ET (un ADR OU le README) staged → OK.
+# Significant AND (an ADR OR the README) staged: OK.
 if [ "$HAS_ADR" = "1" ] || [ "$HAS_README" = "1" ]; then
   exit 0
 fi
 
-# Sinon on bloque avec un message structuré que Claude va lire et exécuter.
+# Otherwise block with a structured message that Claude reads and executes.
 cat >&2 <<EOF
 [pre-commit-docs-check] BLOCKED
 

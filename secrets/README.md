@@ -1,5 +1,5 @@
 # secrets/
 
-**ACCÈS INTERDIT pour Claude Code.**
+**ACCESS FORBIDDEN for Claude Code.**
 
-Bloqué par `permissions.deny` + hook `block-sensitive-paths.sh`. Vide en démo.
+Blocked by `permissions.deny` + the `block-sensitive-paths.sh` hook. Empty in the demo.

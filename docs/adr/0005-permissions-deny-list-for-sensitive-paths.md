@@ -6,7 +6,7 @@
 
 ## Context
 
-`AGENTS.md §8` mandates "pas de secret en clair dans le repo". The demo repo ships two folders that simulate sensitive content (`prod-config/`, `secrets/`) plus generic credential file shapes (`.env`, `*.pem`, `*.key`, `id_rsa`, `id_ed25519`). Agents — including helpful ones — must not be able to read, edit, or write these, even by accident or via creative file paths.
+`AGENTS.md §8` mandates "no plaintext secret in the repository". The demo repo ships two folders that simulate sensitive content (`prod-config/`, `secrets/`) plus generic credential file shapes (`.env`, `*.pem`, `*.key`, `id_rsa`, `id_ed25519`). Agents — including helpful ones — must not be able to read, edit, or write these, even by accident or via creative file paths.
 
 Claude Code has two independent mechanisms to prevent this: the `permissions` block in `.claude/settings.json` and PreToolUse hooks. Either alone is a single point of failure (a misconfigured `permissions` allow rule; a typo in the hook regex). Both together fail closed.
 

@@ -1,56 +1,56 @@
 ---
 name: secret-scrubber
-description: Détecte secrets, credentials, clés API, tokens, mots de passe en dur dans le code, les configs, les specs et les exemples. Masque-les dans tout output destiné à un log, un rapport ou un message externe. Utiliser systématiquement avant tout output d'audit, toute génération de rapport, toute trace destinée à sortir du repo.
+description: Detects secrets, credentials, API keys, tokens and hard-coded passwords in code, configs, specs and examples. Masks them in any output meant for a log, a report or an external message. Use systematically before any audit output, any report generation, any trace that will leave the repository.
 ---
 
 # secret-scrubber
 
 ## When to use
 
-- Avant de produire n'importe quel rapport qui sortira du repo (audit, PR description, message Slack/Jira via MCP).
-- Quand un agent s'apprête à logger / afficher un fichier de config (`application.yml`, `.env`, fichiers sous `secrets/` ou `prod-config/`).
-- Si l'utilisateur colle un payload qui ressemble à un secret.
+- Before producing any report that will leave the repository (audit, PR description, Slack/Jira message through MCP).
+- When an agent is about to log or display a config file (`application.yml`, `.env`, files under `secrets/` or `prod-config/`).
+- When the user pastes a payload that looks like a secret.
 
-**Ne pas utiliser** pour : audit OWASP (→ `owasp-reviewer`).
+**Do not use** for: OWASP audit (use `owasp-reviewer`).
 
-## Patterns détectés
+## Detected patterns
 
-| Type | Pattern (regex/heuristique) |
+| Type | Pattern (regex/heuristic) |
 |---|---|
 | AWS Access Key | `AKIA[0-9A-Z]{16}` |
-| AWS Secret | base64 40 chars + contexte `aws_secret_access_key` |
+| AWS Secret | 40-char base64 + `aws_secret_access_key` context |
 | JWT | `eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+` |
 | Stripe live key | `sk_live_[0-9a-zA-Z]{24,}` |
 | GitHub PAT | `ghp_[A-Za-z0-9]{36}` |
 | Google API key | `AIza[0-9A-Za-z\-_]{35}` |
 | Private key block | `-----BEGIN (RSA |EC |DSA |OPENSSH |)PRIVATE KEY-----` |
-| Generic high-entropy | string 32+ chars, base64/hex alphabet, > 4.0 bits/char Shannon entropy |
+| Generic high-entropy | 32+ char string, base64/hex alphabet, Shannon entropy > 4.0 bits/char |
 | Password in URL | `://[^/\s:]+:[^/\s@]+@` |
-| `password=`, `secret=`, `token=`, `api[_-]?key=` assignments | regex sur contexte |
+| `password=`, `secret=`, `token=`, `api[_-]?key=` assignments | context-based regex |
 
 ## Workflow
 
-1. **Scanner** le contenu cible (string, fichier, glob).
-2. **Pour chaque match** :
-   - Logguer **localement** : type, chemin, ligne, **les 4 premiers + 4 derniers caractères** (jamais le secret en clair).
-   - Remplacer dans l'output destiné à sortir par `«REDACTED:<TYPE>:<hash8>»` où `hash8` est les 8 premiers chars du SHA256 du secret (utile pour dédupliquer sans révéler).
-3. **Si le secret est trouvé dans un fichier commité** (pas seulement un buffer en mémoire) :
-   - Sévérité : **CRITICAL**.
-   - Recommander : (a) révoquer le secret côté provider, (b) le retirer de l'historique git (`git filter-repo`), (c) le déplacer dans un vault.
-4. **Toujours produire un résumé** : `n secret(s) detected, m redacted in output, k require rotation`.
+1. **Scan** the target content (string, file, glob).
+2. **For each match**:
+   - Log **locally**: type, path, line, **first 4 and last 4 characters** (never the secret in clear).
+   - In any output meant to leave the repository, replace it with `«REDACTED:<TYPE>:<hash8>»`, where `hash8` is the first 8 characters of the secret's SHA-256 (deduplicates without revealing).
+3. **If the secret is found in a committed file** (not only an in-memory buffer):
+   - Severity: **CRITICAL**.
+   - Recommend: (a) revoke the secret at the provider, (b) remove it from git history (`git filter-repo`), (c) move it to a vault.
+4. **Always produce a summary**: `n secret(s) detected, m redacted in output, k require rotation`.
 
-## Faux positifs à éviter
+## False positives to avoid
 
-- Exemples de doc explicitement marqués `EXAMPLE` / `dummy` / `fake`.
-- UUIDs (entropie haute mais pas un secret).
-- Hashes git, hashes de build, checksums.
-- Schémas OpenAPI qui *décrivent* un format de token (pas une valeur réelle).
+- Documentation examples explicitly marked `EXAMPLE` / `dummy` / `fake`.
+- UUIDs (high entropy, not a secret).
+- Git hashes, build hashes, checksums.
+- OpenAPI schemas that *describe* a token format (not an actual value).
 
 ## Output format
 
 ```
 ## Secret scan
-Scope: <fichiers ou buffer>
+Scope: <files or buffer>
 
 Findings:
 - HIGH  src/main/resources/application-prod.yml:14  AWS_ACCESS_KEY  AKIA...XYZW  → REDACTED in report

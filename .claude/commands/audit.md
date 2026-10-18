@@ -1,13 +1,13 @@
 ---
-description: Lance un audit sécurité complet (use case 3 — SECURE) via le subagent security-audit-agent.
-argument-hint: "[chemin de spec optionnel, par défaut openapi/payments.yaml]"
+description: Runs a full security audit (use case 3, SECURE) through the security-audit-agent subagent.
+argument-hint: "[optional spec path, defaults to openapi/payments.yaml]"
 ---
 
-Lance le subagent `security-audit-agent` avec la consigne suivante :
+Run the `security-audit-agent` subagent with the following instruction:
 
-> Audit cible : `openapi/payments.yaml` (ou `$ARGUMENTS` si fourni) + tout
-> `src/main/java/com/franceapi/demo/`. Suis exactement le workflow décrit dans
-> ton system prompt : Phase 1 scope → Phase 2 skills → Phase 3 rapport consolidé
-> → Phase 4 propositions de patches (NE PAS APPLIQUER).
+> Audit target: `openapi/payments.yaml` (or `$ARGUMENTS` if provided) + all of
+> `src/main/java/com/franceapi/demo/`. Follow exactly the workflow described in
+> your system prompt: Phase 1 scope → Phase 2 skills → Phase 3 consolidated
+> report → Phase 4 patch proposals (DO NOT APPLY).
 
-Le hook `post-audit-report.sh` capturera automatiquement ton rapport final.
+The `post-audit-report.sh` hook captures your final report automatically.

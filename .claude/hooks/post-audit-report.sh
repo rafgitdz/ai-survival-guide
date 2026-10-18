@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # post-audit-report.sh
-# Déclenché par SubagentStop matché sur le subagent `security-audit-agent`.
-# Rôle :
-#   1) Persister le dernier rapport d'audit sous docs/audits/audit-<timestamp>.md
-#   2) Si l'environnement contient une vraie intégration (MCP issue tracker, gh CLI),
-#      ouvrir une issue par finding CRITICAL/HIGH.
+# Triggered by SubagentStop, matched on the `security-audit-agent` subagent.
+# Role:
+#   1) Persist the latest audit report under docs/audits/audit-<timestamp>.md
+#   2) If the environment has a real integration (MCP issue tracker, gh CLI),
+#      open one issue per CRITICAL/HIGH finding.
 #
-# Le hook reçoit le JSON Claude Code de fin de subagent :
+# The hook receives the Claude Code subagent-stop JSON:
 # { "subagent_name": "...", "transcript_path": "...", ... }
 
 set -uo pipefail
@@ -15,7 +15,7 @@ INPUT="$(cat)"
 SUBAGENT="$(printf '%s' "$INPUT" | jq -r '.subagent_name // .agent_name // ""')"
 TRANSCRIPT="$(printf '%s' "$INPUT" | jq -r '.transcript_path // ""')"
 
-# On ne s'active que pour notre agent
+# Only act for our agent
 if [ "$SUBAGENT" != "security-audit-agent" ]; then
   exit 0
 fi
@@ -43,7 +43,7 @@ OUT="docs/audits/audit-$TS.md"
 
 echo "[post-audit] Report persisted to $OUT" >&2
 
-# Ouverture d'issues — best effort, ne bloque jamais.
+# Issue creation: best effort, never blocks.
 if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
   grep -E '^- \[(CRITICAL|HIGH)\]' "$OUT" 2>/dev/null | while IFS= read -r line; do
     title="$(printf '%s' "$line" | sed -E 's/^- //; s/[[:space:]]+/ /g' | cut -c1-100)"

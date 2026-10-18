@@ -1,9 +1,9 @@
 # openapi/payments-v1.yaml
-# Spec "avant" pour le use case EVOLVE.
-# Version conforme aux rules (kebab-case, /v1, RFC 7807, bearerAuth, etc.) — sert de référence.
+# "Before" spec for the EVOLVE use case.
+# Compliant with the rules (kebab-case, /v1, RFC 7807, bearerAuth, etc.): the reference version.
 openapi: 3.1.0
 info:
-  title: FranceAPI Payments
+  title: Payments API
   version: "1.2.0"
 
 security:

@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and contract tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - run: ./mvnw -B -q clean test
+
+  spec-lint:
+    name: Spec lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - run: npm install -g @stoplight/spectral-cli@6.17.0
+      - name: Compliant specs must pass
+        run: |
+          for spec in openapi/payments-v1.yaml openapi/payments-v2.yaml; do
+            spectral lint --ruleset .spectral.yml --fail-severity=error "$spec"
+          done
+
+  demo-integrity:
+    name: Demo starting state
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - run: npm install -g @stoplight/spectral-cli@6.17.0
+      # The demos only work if the planted traps are still there.
+      - name: payments.yaml must still fail the lint (planted defects)
+        run: |
+          if spectral lint --ruleset .spectral.yml --fail-severity=error openapi/payments.yaml; then
+            echo "::error::openapi/payments.yaml passes the lint: the planted defects of the SECURE/AUDIT demos are gone"
+            exit 1
+          fi
+      - name: db/schema.sql must not contain a refunds table (DESIGN demo)
+        run: |
+          if grep -qi 'create table refunds' db/schema.sql; then
+            echo "::error::db/schema.sql contains a refunds table: the DESIGN demo has nothing left to ask"
+            exit 1
+          fi

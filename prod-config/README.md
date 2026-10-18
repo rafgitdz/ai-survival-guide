@@ -1,6 +1,6 @@
 # prod-config/
 
-**ACCÈS INTERDIT pour Claude Code.**
+**ACCESS FORBIDDEN for Claude Code.**
 
-Tout fichier ici est bloqué par `permissions.deny` dans `.claude/settings.json`
-ET par le hook `block-sensitive-paths.sh`. Sert à démontrer la défense en profondeur.
+Every file here is blocked by `permissions.deny` in `.claude/settings.json`
+AND by the `block-sensitive-paths.sh` hook. It demonstrates defense in depth.

@@ -11,18 +11,18 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
- * Contract tests minimaux — vérifient les invariants demandés par AGENTS.md §5.
- * Pour la démo, on cible ce qu'on AIMERAIT voir respecter par la spec/code corrigés.
- * Certains tests sont volontairement marqués (TODO) — ils échoueront sur la version
- * vulnérable et passeront une fois que security-audit-agent aura appliqué les patches.
+ * Minimal contract tests: they check the invariants required by AGENTS.md §5.
+ * For the demo, they target what the fixed spec and code SHOULD guarantee.
+ * Some tests are deliberately marked TODO: they fail on the vulnerable version
+ * and pass once security-audit-agent has applied its patches.
  */
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-                // Spring Boot désactive l'export metrics en tests par défaut
-                // (management.defaults.metrics.export.enabled=false). On le ré-active
-                // ici parce que justement on VEUT vérifier que /actuator/prometheus
-                // est exposé (AGENTS.md §7-A).
+                // Spring Boot disables metrics export in tests by default
+                // (management.defaults.metrics.export.enabled=false). It is
+                // re-enabled here precisely because we WANT to check that
+                // /actuator/prometheus is exposed (AGENTS.md §7-A).
                 "management.defaults.metrics.export.enabled=true",
                 "management.prometheus.metrics.export.enabled=true",
                 "management.endpoints.web.exposure.include=health,info,prometheus,metrics"
@@ -52,13 +52,13 @@ class PaymentContractTest {
 
     @Test
     void actuatorPrometheus_isExposed() {
-        // AGENTS.md §7 — A. Metrics
+        // AGENTS.md §7, A. Metrics
         given().when().get("/actuator/prometheus").then().statusCode(200);
     }
 
-    // TODO — après remédiation : ce test doit passer.
-    // Un body avec un champ non documenté DOIT être rejeté (400 / 422 RFC 7807).
-    // Aujourd'hui il échoue car le DTO accepte tout.
+    // TODO after remediation: this test must pass.
+    // A body with an undocumented field MUST be rejected (400 / 422, RFC 7807).
+    // Today it fails because the DTO accepts anything.
     //
     // @Test
     // void createPayment_rejectsMassAssignmentFields() {

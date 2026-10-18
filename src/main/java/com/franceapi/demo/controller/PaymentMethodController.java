@@ -8,13 +8,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Stub — la spec déclare la tag `paymentMethods`, donc le generator crée
- * l'interface PaymentMethodsApi. Il faut l'implémenter pour que le projet
- * compile.
+ * Stub: the spec declares the `paymentMethods` tag, so the generator creates
+ * the PaymentMethodsApi interface, which must be implemented for the project
+ * to compile.
  *
- * Le path `/v1/paymentMethods` (camelCase) reste planté dans la spec :
- * c'est une violation de AGENTS.md §2 (kebab-case) que les audits doivent
- * remonter.
+ * The `/v1/paymentMethods` path (camelCase) stays planted in the spec: it
+ * violates AGENTS.md §2 (kebab-case) and the audits must report it.
  */
 @RestController
 public class PaymentMethodController implements PaymentMethodsApi {

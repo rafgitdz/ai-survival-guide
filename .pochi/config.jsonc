@@ -1,34 +1,34 @@
-// .pochi/config.jsonc — config Pochi scope projet (versionné dans git).
-// Format JSONC : les commentaires sont autorisés (// et /* */).
-// Pour user-scope (perso, non versionné), copier les entrées dans ~/.pochi/config.jsonc.
+// .pochi/config.jsonc: Pochi configuration, project scope (versioned in git).
+// JSONC format: comments are allowed (// and /* */).
+// For user scope (personal, not versioned), copy the entries into ~/.pochi/config.jsonc.
 //
-// Quatre serveurs MCP : tickets (style Jira), git, lecture de schéma DB,
-// contract-test-runner. Les commandes/URLs ci-dessous sont des EXEMPLES
-// branchables — remplacer par les vraies cibles avant prod.
+// Four MCP servers: tickets (Jira-like), git, database schema reader,
+// contract-test-runner. The commands and URLs below are pluggable EXAMPLES:
+// replace them with real targets before production.
 {
   "mcp": {
 
-    // Serveur MCP qui expose les tickets style Jira.
-    // Remplacer JIRA_BASE_URL et JIRA_TOKEN par les vraies valeurs (via env, jamais hardcodé).
+    // MCP server exposing Jira-like tickets (placeholder package).
+    // Provide JIRA_BASE_URL and JIRA_TOKEN through the environment, never hard-coded.
     "tickets": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-everything-tickets"],
       "env": {
-        "JIRA_BASE_URL": "${JIRA_BASE_URL:-https://franceapi.example.atlassian.net}",
+        "JIRA_BASE_URL": "${JIRA_BASE_URL:-https://your-company.example.atlassian.net}",
         "JIRA_TOKEN": "${JIRA_TOKEN:-REPLACE_ME}"
       }
     },
 
-    // Serveur MCP officiel pour git — lecture historique, diffs, blame.
-    // En lecture seule pour la démo (no commit via MCP).
+    // Official git MCP server: history, diffs, blame.
+    // Read-only for the demo (no commit through MCP).
     "git": {
       "command": "uvx",
       "args": ["mcp-server-git", "--repository", "."]
     },
 
-    // Serveur MCP de lecture du schéma DB (DDL only, pas de data).
-    // Utilisé par openapi-designer et owasp-reviewer pour ne JAMAIS inventer
-    // un champ (cf. AGENTS.md §6).
+    // MCP server reading the database schema (DDL only, no data, placeholder package).
+    // Used by openapi-designer and owasp-reviewer so that they NEVER invent
+    // a field (see AGENTS.md §6).
     "db-schema": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-postgres-readonly"],
@@ -39,9 +39,9 @@
       }
     },
 
-    // Serveur MCP maison qui expose 'run_contract_tests' lançant mvnw test
-    // sur la suite *ContractTest et retournant un rapport structuré.
-    // Le binaire référencé ici est un placeholder : remplacer par la vraie implem.
+    // In-house MCP server exposing 'run_contract_tests', which runs mvnw test
+    // on the *ContractTest suite and returns a structured report.
+    // The referenced binary is a placeholder: replace it with the real implementation.
     "contract-test-runner": {
       "command": "node",
       "args": ["./mcp/contract-test-runner/index.js"],

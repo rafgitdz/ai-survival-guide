@@ -6,7 +6,7 @@
 
 ## Context
 
-`AGENTS.md §6` requires that agents read the **real** DB schema before modelling a DTO ("jamais supposer un schéma de base de données"). The demo therefore needs a schema artifact that ships with the repo and is reachable by skills (`openapi-designer`, `owasp-reviewer`).
+`AGENTS.md §6` requires that agents read the **real** DB schema before modelling a DTO ("never assume a database schema"). The demo therefore needs a schema artifact that ships with the repo and is reachable by skills (`openapi-designer`, `owasp-reviewer`).
 
 The obvious choice was a real migration tool (Flyway or Liquibase). But the demo also runs `./mvnw test` at multiple checkpoints (contract tests, hook validation) **without** a live database. With Flyway on the classpath, Spring Boot autoconfigures a `DataSource` and fails at startup when no DB is reachable — which would break every demo step downstream.
 

@@ -1,23 +1,23 @@
 # openapi/payments.yaml
-# Les défauts plantés (résumé pour le présentateur) :
-#  [API3 / mass-assignment]  PaymentCreateRequest expose `status` et `userId` côté client.
-#  [API3 / leak]             Payment expose `internalAccountId` non documenté dans aucun example métier.
-#  [erreurs]                 POST /v1/payments renvoie 200 sur une erreur métier au lieu d'un 422 Problem.
-#  [erreurs]                 La réponse 400 n'est pas du application/problem+json.
-#  [obs]                     Aucune mention de /actuator/prometheus, pas de headers rate-limit.
-#  [naming]                  Un path est en camelCase (/v1/paymentMethods) — viole AGENTS.md §2.
-#  [auth]                    L'endpoint GET /v1/payments/{id} n'exige aucune sécurité (security: []) sans justification.
+# Planted defects (summary for the presenter):
+#  [API3 / mass-assignment]  PaymentCreateRequest exposes `status` and `userId` to the client.
+#  [API3 / leak]             Payment exposes `internalAccountId`, documented in no business example.
+#  [errors]                  POST /v1/payments returns 200 on a business error instead of a 422 Problem.
+#  [errors]                  The 400 response is not application/problem+json.
+#  [obs]                     No mention of /actuator/prometheus, no rate-limit headers.
+#  [naming]                  One path is camelCase (/v1/paymentMethods), violating AGENTS.md §2.
+#  [auth]                    GET /v1/payments/{id} requires no security (security: []) without justification.
 openapi: 3.1.0
 info:
-  title: FranceAPI Payments
+  title: Payments API
   version: "1.0.0"
   description: |
-    Démo France API 2026 — spec imparfaite à dessein.
+    France API 2026 demo: deliberately flawed spec.
 
 servers:
   - url: https://api.franceapi.example.com
 
-# Sécurité appliquée globalement, mais surchargée plus bas (mauvaise pratique plantée).
+# Security applied globally, but overridden further down (planted bad practice).
 security:
   - bearerAuth: []
 
@@ -39,14 +39,14 @@ paths:
               $ref: '#/components/schemas/PaymentCreateRequest'
       responses:
         "200":
-          # PLANTÉ : on renvoie 200 même sur "insufficient funds". Devrait être 422.
+          # PLANTED: returns 200 even on "insufficient funds". Should be 422.
           description: Payment created OR business error described in body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Payment'
         "400":
-          # PLANTÉ : pas du application/problem+json
+          # PLANTED: not application/problem+json
           description: Bad request
           content:
             application/json:
@@ -63,7 +63,7 @@ paths:
       tags: [payments]
       summary: List payments
       operationId: listPayments
-      # PLANTÉ : pas de pagination → API4 Unrestricted Resource Consumption
+      # PLANTED: no pagination → API4 Unrestricted Resource Consumption
       responses:
         "200":
           description: OK
@@ -81,7 +81,7 @@ paths:
       tags: [payments]
       summary: Get a payment
       operationId: getPayment
-      # PLANTÉ : security: [] sans justification → endpoint sensible exposé sans auth (API2)
+      # PLANTED: security: [] without justification → sensitive endpoint exposed without auth (API2)
       security: []
       parameters:
         - name: paymentId
@@ -98,7 +98,7 @@ paths:
         "404":
           $ref: '#/components/responses/NotFound'
 
-  # PLANTÉ : naming camelCase au lieu de kebab-case → /v1/payment-methods
+  # PLANTED: camelCase naming instead of kebab-case → /v1/payment-methods
   /v1/paymentMethods:
     get:
       tags: [paymentMethods]
@@ -175,10 +175,10 @@ components:
         currency: { type: string, pattern: "^[A-Z]{3}$" }
 
     PaymentCreateRequest:
-      # PLANTÉ : mass assignment — `status`, `userId` et `internalAccountId` ne doivent JAMAIS être en input.
+      # PLANTED: mass assignment. `status`, `userId` and `internalAccountId` must NEVER be accepted as input.
       type: object
       required: [amount, currency]
-      additionalProperties: true   # PLANTÉ : doit être false
+      additionalProperties: true   # PLANTED: must be false
       properties:
         amount:            { type: integer }
         currency:          { type: string }
@@ -195,7 +195,7 @@ components:
         currency:          { type: string }
         status:            { type: string, enum: [PENDING, AUTHORIZED, CAPTURED, REFUNDED, FAILED] }
         createdAt:         { type: string, format: date-time }
-        # internalAccountId est RETOURNÉ par le contrôleur mais ABSENT ici → mismatch (API3 + spec incohérente)
+        # internalAccountId is RETURNED by the controller but MISSING here → mismatch (API3 + inconsistent spec)
       example:
         id: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
         amount: 1999

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # pre-merge-diff.sh
-# Déclenché par PreToolUse sur `git merge ...`.
-# Rôle : générer le diff OpenAPI entre HEAD et la branche à merger,
-#        et relancer les contract tests. Bloque si breaking change détecté
-#        sans bump majeur correspondant.
+# Triggered by PreToolUse on `git merge ...`.
+# Role: generate the OpenAPI diff between HEAD and the branch being merged,
+#       and rerun the contract tests. Blocks when a breaking change is detected
+#       without a matching major bump.
 
 set -uo pipefail
 
@@ -16,7 +16,7 @@ fi
 
 cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || exit 0
 
-# Cible du merge (dernier mot non-flag de la commande)
+# Merge target (last non-flag word of the command)
 TARGET="$(printf '%s' "$CMD" | awk '{ for(i=NF;i>=1;i--) if ($i !~ /^-/) { print $i; exit } }')"
 TARGET="${TARGET:-main}"
 
@@ -43,8 +43,8 @@ if [ -f "./mvnw" ]; then
   fi
 fi
 
-# Heuristique simple : si le diff contient des lignes "-" sur des paths ou
-# des renommages de champs, on demande confirmation du bump majeur.
+# Simple heuristic: if the diff contains "-" lines on paths or field
+# renames, ask for confirmation of the major bump.
 if grep -E '^\-\s+(/v[0-9]+/|[[:space:]]+[a-zA-Z]+:)' "$DIFF_FILE" >/dev/null 2>&1; then
   echo "[pre-merge hook] WARN: possible breaking changes detected — confirm major version bump in CHANGELOG.md before merging." >&2
 fi

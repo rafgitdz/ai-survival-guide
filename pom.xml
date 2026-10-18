@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  pom.xml — France API 2026 demo, contract-first.
+  pom.xml: contract-first demo (France API 2026).
   - Spring Boot 3.5.x (Java 21).
-  - openapi-generator-maven-plugin : génère les API interfaces + DTOs Java
-    depuis openapi/payments.yaml. Le code Java implémente les interfaces.
-  - Si la spec change → le build casse jusqu'à ce que le code colle. C'est
-    ça, contract-first au sens fort (pas seulement "discipline").
+  - openapi-generator-maven-plugin generates the Java API interfaces and DTOs
+    from openapi/payments.yaml. The hand-written code implements the interfaces.
+  - If the spec changes, the build breaks until the code matches. That is
+    contract-first in the strong sense, not just a matter of discipline.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
@@ -45,7 +45,7 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
-        <!-- Requis par le code généré (annotations @Operation, @Parameter, etc.) -->
+        <!-- Required by the generated code (@Operation, @Parameter annotations, etc.) -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations-jakarta</artifactId>
@@ -77,11 +77,11 @@
             </plugin>
 
             <!--
-              OpenAPI Generator — génère les interfaces API + DTOs depuis la spec.
-              Mode interfaceOnly : on génère uniquement les interfaces Spring
-              (les @RestController sont écrits à la main et les implémentent).
-              Avantage démo : si la spec ajoute/renomme/supprime un champ, le
-              build casse, pas un test à 22h.
+              OpenAPI Generator: generates the API interfaces and DTOs from the spec.
+              interfaceOnly mode: only the Spring interfaces are generated
+              (the @RestController classes are hand-written and implement them).
+              Demo benefit: when the spec adds, renames or removes a field, the
+              build breaks, instead of a test at 10 p.m.
             -->
             <plugin>
                 <groupId>org.openapitools</groupId>
@@ -103,9 +103,9 @@
                             <generateApiDocumentation>false</generateApiDocumentation>
                             <generateModelDocumentation>false</generateModelDocumentation>
                             <generateSupportingFiles>false</generateSupportingFiles>
-                            <!-- La spec est volontairement imparfaite (200 sur erreur, etc.).
-                                 On laisse Spectral juger côté lint ; ici on désactive la
-                                 validation stricte du generator pour ne pas bloquer la démo. -->
+                            <!-- The spec is deliberately flawed (200 on error, etc.).
+                                 Spectral is the judge on the lint side; strict generator
+                                 validation is disabled here so the demo is not blocked. -->
                             <skipValidateSpec>true</skipValidateSpec>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>

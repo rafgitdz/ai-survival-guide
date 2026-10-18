@@ -11,25 +11,24 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Implémente l'interface PaymentsApi GÉNÉRÉE depuis openapi/payments.yaml.
+ * Implements the PaymentsApi interface GENERATED from openapi/payments.yaml.
  *
- * Si la spec change (renommage, suppression, nouveau champ obligatoire),
- * cette classe ne compile plus tant qu'on ne l'aligne pas. C'est le cœur
- * du contract-first dur.
+ * If the spec changes (rename, removal, new required field), this class stops
+ * compiling until it is aligned. That is the core of hard contract-first.
  *
- * VOLONTAIREMENT VULNÉRABLE — pour les use cases SECURE et AUDIT.
- * Défauts plantés qui survivent à la génération :
- *  - POST renvoie 200 sur "insufficient funds" au lieu de 422 + Problem (cf. spec).
- *  - GET /v1/payments/{id} : aucun contrôle d'autorisation (BOLA, API1).
- *  - listPayments : pas de pagination (API4).
- *  - Le DTO PaymentCreateRequest généré contient `status`, `userId`,
- *    `internalAccountId` parce que la SPEC les expose → mass assignment
- *    propagé du contrat au code. C'est la démonstration : un contrat
- *    vulnérable produit un code vulnérable. Le fix se fait dans la spec.
+ * DELIBERATELY VULNERABLE, for the SECURE and AUDIT use cases.
+ * Planted defects that survive code generation:
+ *  - POST returns 200 on "insufficient funds" instead of 422 + Problem (see spec).
+ *  - GET /v1/payments/{id}: no authorization check (BOLA, API1).
+ *  - listPayments: no pagination (API4).
+ *  - The generated PaymentCreateRequest DTO contains `status`, `userId` and
+ *    `internalAccountId` because the SPEC exposes them: mass assignment
+ *    propagated from the contract to the code. That is the point: a
+ *    vulnerable contract produces vulnerable code. The fix belongs in the spec.
  *
- * NOTE — le leak `internalAccountId` côté RESPONSE a disparu : le generator
- * ne crée pas un champ absent du schéma Payment. Le contract-first tue
- * mécaniquement ce type de drift.
+ * NOTE: the `internalAccountId` leak in the RESPONSE is gone, because the
+ * generator never creates a field missing from the Payment schema.
+ * Contract-first mechanically kills this kind of drift.
  */
 @RestController
 public class PaymentController implements PaymentsApi {
@@ -40,13 +39,13 @@ public class PaymentController implements PaymentsApi {
                 .id(UUID.randomUUID())
                 .amount(req.getAmount())
                 .currency(req.getCurrency())
-                // PLANTÉ — trust input
+                // PLANTED: trusts client input
                 .status(req.getStatus() != null
                         ? Payment.StatusEnum.valueOf(req.getStatus().name())
                         : Payment.StatusEnum.PENDING)
                 .createdAt(OffsetDateTime.now());
 
-        // PLANTÉ — 200 OK même en cas d'erreur métier "insufficient funds"
+        // PLANTED: 200 OK even on the "insufficient funds" business error
         if (req.getAmount() != null && req.getAmount() > 1_000_000) {
             p.setStatus(Payment.StatusEnum.FAILED);
             return ResponseEntity.ok(p);
@@ -56,14 +55,14 @@ public class PaymentController implements PaymentsApi {
 
     @Override
     public ResponseEntity<List<Payment>> listPayments() {
-        // PLANTÉ — pas de pagination (API4 Unrestricted Resource Consumption)
+        // PLANTED: no pagination (API4 Unrestricted Resource Consumption)
         return ResponseEntity.ok(List.of());
     }
 
     @Override
     public ResponseEntity<Payment> getPayment(UUID paymentId) {
-        // PLANTÉ — aucun check d'ownership (BOLA, API1).
-        // PLANTÉ — security: [] dans la spec → endpoint sensible exposé sans auth (API2).
+        // PLANTED: no ownership check (BOLA, API1).
+        // PLANTED: security: [] in the spec, so a sensitive endpoint is exposed without auth (API2).
         Payment p = new Payment()
                 .id(paymentId)
                 .amount(1999)

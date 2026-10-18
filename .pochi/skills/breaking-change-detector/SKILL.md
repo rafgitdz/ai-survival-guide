@@ -1,49 +1,49 @@
 ---
 name: breaking-change-detector
-description: Compare deux specs OpenAPI (avant / après) et liste TOUS les breaking changes avec sévérité (MAJOR/MINOR/PATCH per rule Semver du repo). Utiliser avant tout merge sur une spec, sur une PR qui modifie un .yaml dans openapi/, ou quand on veut décider du bump de version. Ne propose PAS de patch — c'est un détecteur, pas un correcteur.
+description: Compares two OpenAPI specs (before and after) and lists EVERY breaking change with its severity (MAJOR/MINOR/PATCH per the repository Semver rule). Use before any merge on a spec, on a PR that changes a .yaml in openapi/, or to decide the version bump. Does NOT propose a patch: it is a detector, not a fixer.
 ---
 
 # breaking-change-detector
 
 ## When to use
 
-- Une PR modifie un fichier dans `openapi/`.
-- On hésite sur le bump de version (PATCH vs MINOR vs MAJOR).
-- Le hook `pre-merge` veut un rapport diff.
+- A PR changes a file in `openapi/`.
+- The version bump is unclear (PATCH vs MINOR vs MAJOR).
+- The `pre-merge` hook needs a diff report.
 
-**Ne pas utiliser** pour : design d'une nouvelle spec (→ `openapi-designer`), audit sécurité (→ `owasp-reviewer`).
+**Do not use** for: designing a new spec (use `openapi-designer`), security audit (use `owasp-reviewer`).
 
-## Classification (issue de AGENTS.md §3)
+## Classification (from AGENTS.md §3)
 
-| Changement | Sévérité |
+| Change | Severity |
 |---|---|
-| Description, summary, tag, example modifié | **PATCH** |
-| Nouvelle opération | **MINOR** |
-| Nouveau champ **optionnel** en réponse ou en input | **MINOR** |
-| Nouveau code de réponse (ex: ajout d'un `429`) | **MINOR** |
-| Suppression d'une opération | **MAJOR** |
-| Suppression d'un champ (request ou response) | **MAJOR** |
-| Renommage d'un champ ou d'une opération | **MAJOR** |
-| Changement de type (`integer` → `string`) | **MAJOR** |
-| `optional` → `required` sur un champ d'input | **MAJOR** |
-| `required` → `optional` sur un champ de **response** | **MAJOR** (clients ne s'y attendent plus) |
-| Retrait d'une valeur d'enum | **MAJOR** |
-| Changement de format d'erreur | **MAJOR** |
-| Changement de schéma de sécurité | **MAJOR** |
-| Changement de path (incluant casse) | **MAJOR** |
+| Description, summary, tag or example changed | **PATCH** |
+| New operation | **MINOR** |
+| New **optional** field in a response or input | **MINOR** |
+| New response code (e.g. adding a `429`) | **MINOR** |
+| Operation removed | **MAJOR** |
+| Field removed (request or response) | **MAJOR** |
+| Field or operation renamed | **MAJOR** |
+| Type changed (`integer` to `string`) | **MAJOR** |
+| `optional` to `required` on an input field | **MAJOR** |
+| `required` to `optional` on a **response** field | **MAJOR** (clients can no longer rely on it) |
+| Enum value removed | **MAJOR** |
+| Error format changed | **MAJOR** |
+| Security scheme changed | **MAJOR** |
+| Path changed (case included) | **MAJOR** |
 
 ## Workflow
 
-1. **Charger** les deux fichiers YAML (`old`, `new`).
-2. **Parser** chacun → représentation canonique : `paths × methods × {parameters, requestBody, responses}` + `components.schemas` + `components.securitySchemes`.
-3. **Diff structurel** :
-   - Opérations supprimées / ajoutées.
-   - Pour chaque opération conservée : params, requestBody, responses, security.
-   - Pour chaque schéma référencé : champs (présence, type, required, enum, format).
-4. **Classer** chaque changement selon la table ci-dessus.
-5. **Décider** : si **au moins un MAJOR** → bump majeur obligatoire. Sinon MINOR si au moins un MINOR. Sinon PATCH.
-6. **Produire le rapport** (format ci-dessous).
-7. **Ne pas corriger**. Si l'utilisateur demande un patch, déléguer à `openapi-designer`.
+1. **Load** both YAML files (`old`, `new`).
+2. **Parse** each one into a canonical form: `paths × methods × {parameters, requestBody, responses}` + `components.schemas` + `components.securitySchemes`.
+3. **Structural diff**:
+   - Removed and added operations.
+   - For each kept operation: parameters, requestBody, responses, security.
+   - For each referenced schema: fields (presence, type, required, enum, format).
+4. **Classify** each change with the table above.
+5. **Decide**: **at least one MAJOR** means a mandatory major bump. Otherwise MINOR if at least one MINOR. Otherwise PATCH.
+6. **Produce the report** (format below).
+7. **Do not fix.** If the user asks for a patch, delegate to `openapi-designer`.
 
 ## Output format
 
@@ -53,16 +53,16 @@ old: openapi/payments-v1.yaml
 new: openapi/payments-v2.yaml
 
 ### MAJOR (n)
-- POST /v1/payments — request: field `amount` renamed to `value` (rename = MAJOR)
-- GET /v1/payments/{id} — response `Payment.currency` removed (removal = MAJOR)
+- POST /v1/payments: request field `amount` renamed to `value` (rename = MAJOR)
+- GET /v1/payments/{id}: response `Payment.currency` removed (removal = MAJOR)
 
 ### MINOR (n)
-- GET /v1/payments — new optional query param `status`
+- GET /v1/payments: new optional query param `status`
 
 ### PATCH (n)
-- (rien)
+- (none)
 
 ### Verdict
 Required version bump: **MAJOR** (v1 → v2)
-Path versioning required: yes — must publish under /v2.
+Path versioning required: yes, must publish under /v2.
 ```

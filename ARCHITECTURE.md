@@ -1,44 +1,44 @@
 <!--
-  ARCHITECTURE.md — Description technique de la stack et de la topologie du repo.
-  Importé par CLAUDE.md → auto-chargé dans chaque conversation Claude Code.
+  ARCHITECTURE.md: technical description of the stack and repository topology.
+  Imported by CLAUDE.md, so loaded into every Claude Code conversation.
 
-  Périmètre : décrire CE QUI EST (technologies, layout, build, runtime).
-  Pas de RULES ici (elles vivent dans AGENTS.md).
-  Pas de POURQUOI ici (les choix sont justifiés dans docs/adr/).
+  Scope: describe WHAT IS (technologies, layout, build, runtime).
+  No RULES here (they live in AGENTS.md).
+  No WHY here (choices are justified in docs/adr/).
 -->
 
-# Architecture — FranceAPI Demo
+# Architecture: AI survival guide demo
 
-## Stack runtime
+## Runtime stack
 
-- **Java 21** (Homebrew OpenJDK ou tout JDK 21+).
+- **Java 21** (Homebrew OpenJDK or any JDK 21+).
 - **Spring Boot 3.5.0** (parent POM).
-- **Tomcat embedded** sur port `8080` par défaut (override `--server.port=8090` en cas de conflit).
-- **Actuator endpoints exposés** : `/actuator/{health,info,prometheus,metrics}`.
-- **Micrometer + micrometer-registry-prometheus** pour l'export Prometheus (nouvelle Prometheus Java client 1.x sous le capot).
+- **Embedded Tomcat** on port `8080` by default (override with `--server.port=8090` on conflict).
+- **Exposed Actuator endpoints**: `/actuator/{health,info,prometheus,metrics}`.
+- **Micrometer + micrometer-registry-prometheus** for the Prometheus export (Prometheus Java client 1.x under the hood).
 
-## Stack build
+## Build stack
 
-- **Maven** (wrapper `./mvnw` versionné).
-- **openapi-generator-maven-plugin 7.10** en mode `interfaceOnly` sur `openapi/payments.yaml` uniquement.
-  - Phase : `generate-sources`.
-  - Output : `target/generated-sources/openapi/src/main/java/com/franceapi/demo/generated/{api,dto}/`.
-  - Config clés : `useSpringBoot3=true`, `useJakartaEe=true`, `useTags=true`, `skipDefaultInterface=true`, `openApiNullable=false`, `dateLibrary=java8`, `skipValidateSpec=true` (parce que la spec est volontairement imparfaite pour la démo).
-- **Spectral** (CLI npm `@stoplight/spectral-cli`) pour le lint OpenAPI. Ruleset dans `.spectral.yml`.
+- **Maven** (versioned `./mvnw` wrapper).
+- **openapi-generator-maven-plugin 7.10** in `interfaceOnly` mode, on `openapi/payments.yaml` only.
+  - Phase: `generate-sources`.
+  - Output: `target/generated-sources/openapi/src/main/java/com/franceapi/demo/generated/{api,dto}/`.
+  - Key settings: `useSpringBoot3=true`, `useJakartaEe=true`, `useTags=true`, `skipDefaultInterface=true`, `openApiNullable=false`, `dateLibrary=java8`, `skipValidateSpec=true` (the spec is deliberately flawed for the demo).
+- **Spectral** (npm CLI `@stoplight/spectral-cli`) for OpenAPI linting. Ruleset in `.spectral.yml`.
 
-## Topologie des packages Java
+## Java package topology
 
 ```
 com.franceapi.demo/
 ├── DemoApplication              # @SpringBootApplication, entry point
 ├── controller/
-│   ├── PaymentController        # implements PaymentsApi (générée)
-│   └── PaymentMethodController  # implements PaymentMethodsApi (générée)
-└── (config/, services/, ...     # vide pour la démo — à étoffer en prod)
+│   ├── PaymentController        # implements PaymentsApi (generated)
+│   └── PaymentMethodController  # implements PaymentMethodsApi (generated)
+└── (config/, services/, ...     # empty for the demo, to be fleshed out in production)
 
-com.franceapi.demo.generated/    # AUTO-GÉNÉRÉ — read-only, ne jamais éditer
+com.franceapi.demo.generated/    # GENERATED: read-only, never edit
 ├── api/
-│   ├── PaymentsApi              # interface Spring, base path /v1/payments
+│   ├── PaymentsApi              # Spring interface, base path /v1/payments
 │   └── PaymentMethodsApi
 └── dto/
     ├── Payment
@@ -46,118 +46,118 @@ com.franceapi.demo.generated/    # AUTO-GÉNÉRÉ — read-only, ne jamais édit
     ├── PaymentMethod
     ├── Money
     ├── Problem
-    └── CreatePayment400Response # inline 400 schema (sera supprimé après fix RFC 7807)
+    └── CreatePayment400Response # inline 400 schema (removed once the RFC 7807 fix lands)
 ```
 
-**Règle non négociable** : `target/generated-sources/` n'est jamais commité (`.gitignore`). Pour propager un changement de spec → relancer `./mvnw generate-sources` ou `./mvnw test`.
+**Non-negotiable rule**: `target/generated-sources/` is never committed (`.gitignore`). To propagate a spec change, run `./mvnw generate-sources` or `./mvnw test`.
 
-## Topologie des tests
+## Test topology
 
 - `src/test/java/com/franceapi/demo/PaymentContractTest.java`
 - `@SpringBootTest(webEnvironment = RANDOM_PORT)` + RestAssured.
-- Properties surchargées dans `@SpringBootTest(properties = ...)` pour ré-activer `management.defaults.metrics.export.enabled=true` (Spring Boot le désactive par défaut en tests).
-- Convention : tout test de contrat porte le suffixe `*ContractTest` — le hook pre-commit cible cette suite.
+- Properties overridden in `@SpringBootTest(properties = ...)` to re-enable `management.defaults.metrics.export.enabled=true` (Spring Boot disables it in tests by default).
+- Convention: every contract test ends with `*ContractTest`; the pre-commit hook targets that suite.
 
-## Topologie des specs OpenAPI
+## OpenAPI spec topology
 
-| Fichier | Rôle | État |
+| File | Role | State |
 |---|---|---|
-| `openapi/payments.yaml` | Source de génération du code Java + sujet des audits SECURE/AUDIT | **Volontairement imparfaite** (mass assignment, 200 sur erreur, naming camelCase, etc.) |
-| `openapi/payments-v1.yaml` | Référence "avant" pour `breaking-change-detector` | Conforme aux rules + headers RFC 8594 `Deprecation`/`Sunset` |
-| `openapi/payments-v2.yaml` | Référence "après" pour `breaking-change-detector` | Contient 3 breaking changes intentionnels (rename, removal, enum restrict) |
-| `openapi/refunds.yaml` | Résultat du use case DESIGN | Généré par `openapi-designer` à partir de `tickets/API-1247.md` |
+| `openapi/payments.yaml` | Source of the generated Java code, and subject of the SECURE/AUDIT demos | **Deliberately flawed** (mass assignment, 200 on error, camelCase path, etc.) |
+| `openapi/payments-v1.yaml` | "Before" reference for `breaking-change-detector` | Compliant with the rules, plus RFC 8594 `Deprecation`/`Sunset` headers |
+| `openapi/payments-v2.yaml` | "After" reference for `breaking-change-detector` | Contains 3 intentional breaking changes (rename, removal, enum restriction) |
+| `openapi/refunds.yaml` | Output of the DESIGN use case | Generated by `openapi-designer` from `tickets/API-1247.md` |
 
-**Important** : seul `openapi/payments.yaml` est pris en input par `openapi-generator`. Les v1/v2/refunds sont des fixtures démos.
+**Important**: only `openapi/payments.yaml` is fed to `openapi-generator`. v1, v2 and refunds are demo fixtures.
 
-## Topologie des fixtures
+## Fixture topology
 
 ```
-tickets/API-1247.md      # Faux ticket Jira décrivant POST /v1/refunds
-db/schema.sql            # DDL fixture avec pièges plantés (amount_cents vs amount, currency_iso vs currency, table refunds absente)
-prod-config/, secrets/   # Honeypots — accès bloqué par permissions + hook
+tickets/API-1247.md      # Fake Jira ticket describing POST /v1/refunds
+db/schema.sql            # DDL fixture with planted traps (amount_cents vs amount, currency_iso vs currency, missing refunds table)
+prod-config/, secrets/   # Honeypots: access blocked by permissions + hook
 ```
 
-## Observabilité
+## Observability
 
-| Dimension | Implémentation | Statut démo |
+| Dimension | Implementation | Demo status |
 |---|---|---|
-| **Métriques Prometheus** | `micrometer-registry-prometheus` + `/actuator/prometheus` | ✅ OK |
-| **Tracing distribué** | Aucun bridge OTel/Zipkin dans `pom.xml` | ❌ Manquant — surface du use case AUDIT |
-| **Logs structurés JSON** | Aucun encoder JSON, pattern logback minimaliste | ❌ Manquant — surface du use case AUDIT |
+| **Prometheus metrics** | `micrometer-registry-prometheus` + `/actuator/prometheus` | ✅ OK |
+| **Distributed tracing** | No OTel/Zipkin bridge in `pom.xml` | ❌ Missing: surfaced by the AUDIT use case |
+| **Structured JSON logs** | No JSON encoder, minimal logback pattern | ❌ Missing: surfaced by the AUDIT use case |
 
-C'est intentionnel : `obs-readiness-checker` doit produire `FAIL` en démo et proposer le fix.
+This is intentional: `obs-readiness-checker` must report `FAIL` during the demo and propose the fix.
 
-## Stack Claude Code
+## Claude Code stack
 
-- **Rules** : `AGENTS.md` (référencé par `CLAUDE.md` via `@AGENTS.md`).
-- **Skills** : 7 fichiers `.claude/skills/<n>/SKILL.md`.
-- **Subagents** : 2 fichiers `.claude/agents/<n>.md` (model `opus`, tools restreints).
-- **Hooks** : 4 scripts dans `.claude/hooks/` wirés depuis `.claude/settings.json` :
-  - `pre-commit-openapi.sh` — PreToolUse Bash → spectral + contract tests.
-  - `pre-merge-diff.sh` — PreToolUse Bash → diff openapi + warn breaking.
-  - `block-sensitive-paths.sh` — PreToolUse Read/Edit/Write/Bash → deny prod-config/secrets.
-  - `pre-commit-docs-check.sh` — PreToolUse Bash → force docs-curator.
-  - `post-audit-report.sh` — SubagentStop matché sur `security-audit-agent` → persiste rapport sous `docs/audits/`.
-- **Slash commands** : `.claude/commands/{audit,evolve}.md`.
-- **MCP servers** : 4 dans `.mcp.json` (tickets, git, db-schema, contract-test-runner) — placeholders branchables.
+- **Rules**: `AGENTS.md` (referenced by `CLAUDE.md` through `@AGENTS.md`).
+- **Skills**: 7 files `.claude/skills/<n>/SKILL.md`.
+- **Subagents**: 2 files `.claude/agents/<n>.md` (model `opus`, restricted tools).
+- **Hooks**: 5 scripts in `.claude/hooks/`, wired from `.claude/settings.json`:
+  - `pre-commit-openapi.sh`: PreToolUse Bash, runs Spectral + contract tests.
+  - `pre-merge-diff.sh`: PreToolUse Bash, OpenAPI diff + breaking-change warning.
+  - `block-sensitive-paths.sh`: PreToolUse Read/Edit/Write/Bash, denies prod-config/secrets.
+  - `pre-commit-docs-check.sh`: PreToolUse Bash, enforces docs-curator.
+  - `post-audit-report.sh`: SubagentStop matched on `security-audit-agent`, persists the report under `docs/audits/`.
+- **Slash commands**: `.claude/commands/{audit,evolve}.md`.
+- **MCP servers**: 4 in `.mcp.json` (tickets, git, db-schema, contract-test-runner), pluggable placeholders.
 
-## Hooks git (côté humain)
+## Git hooks (human side)
 
-- `.githooks/pre-commit` — miroir des hooks Claude (defense in depth).
-  - Spectral bloquant (sauf `payments.yaml`, exclu car volontairement imparfait).
-  - Contract tests bloquants.
-  - Docs check **WARN-only** côté humain (on n'oblige pas un dev à invoquer Claude).
-- Activation : `git config core.hooksPath .githooks`.
+- `.githooks/pre-commit`: mirror of the Claude hooks (defense in depth).
+  - Spectral blocking (except `payments.yaml`, excluded because deliberately flawed).
+  - Contract tests blocking.
+  - Docs check **warn-only** on the human side (a developer is not forced to invoke Claude).
+- Activation: `git config core.hooksPath .githooks`.
 
-## Flow de requête HTTP en runtime
+## Runtime HTTP request flow
 
 ```
 HTTP POST /v1/payments
    │
    ▼
-Tomcat embedded (Servlet container)
+Embedded Tomcat (servlet container)
    │
    ▼
 Spring DispatcherServlet
    │
    ▼
 PaymentController#createPayment(PaymentCreateRequest)
-   │   (implements PaymentsApi générée depuis openapi/payments.yaml)
+   │   (implements PaymentsApi, generated from openapi/payments.yaml)
    ▼
 ResponseEntity<Payment>
    │
    ▼
-Jackson sérialise → application/json
+Jackson serializes to application/json
    │
    ▼
-Filtre Actuator capture : http_server_requests_seconds → /actuator/prometheus
+Actuator filter records http_server_requests_seconds, exposed on /actuator/prometheus
 ```
 
-## Flow CI/dev
+## CI/dev flow
 
 ```
 git commit
    │
-   ▼ (1) Hook Claude PreToolUse Bash sur `git commit`
-       ├── pre-commit-openapi.sh   → spectral + contract tests
-       ├── pre-commit-docs-check.sh → exige ADR/README si changement significatif
-       └── block-sensitive-paths.sh → deny prod-config/secrets
+   ▼ (1) Claude PreToolUse Bash hook on `git commit`
+       ├── pre-commit-openapi.sh    → Spectral + contract tests
+       ├── pre-commit-docs-check.sh → requires an ADR/README update on significant changes
+       └── block-sensitive-paths.sh → denies prod-config/secrets
    │
-   ▼ (2) Si Claude bypasse via terminal humain : .githooks/pre-commit
-       (mêmes checks, docs WARN-only)
+   ▼ (2) If Claude is bypassed through a human terminal: .githooks/pre-commit
+       (same checks, docs warn-only)
    │
-   ▼ (3) Commit créé
+   ▼ (3) Commit created
 ```
 
-## Conventions de nommage Maven / Spring
+## Maven / Spring naming conventions
 
 - `groupId` = `com.franceapi`, `artifactId` = `franceapi-demo`, `version` = `1.0.0`.
-- Profile par défaut : aucun (`spring.profiles.active` non défini → "default").
-- Tests : pas d'`@ActiveProfiles` (causait un faux échec de `/actuator/prometheus` en test, cf. ADR-0001).
+- Default profile: none (`spring.profiles.active` unset, so "default").
+- Tests: no `@ActiveProfiles` (it caused a false failure of `/actuator/prometheus` in tests, see ADR-0001).
 
-## Liens internes
+## Internal links
 
-- Rules contraignantes : voir `AGENTS.md`.
-- Décisions architecturales avec rationale : voir `docs/adr/`.
-- Onboarding humain : voir `README.md`.
-- Cycle démo des 4 use cases : voir `DEMO-CHECKLIST.md`.
+- Binding rules: see `AGENTS.md`.
+- Architecture decisions with rationale: see `docs/adr/`.
+- Human onboarding: see `README.md`.
+- Walk-through of the 4 demo use cases: see `DEMO-CHECKLIST.md`.

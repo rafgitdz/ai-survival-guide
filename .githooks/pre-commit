@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# .githooks/pre-commit — vrai hook git côté humain.
-# Active avec : git config core.hooksPath .githooks
-# Symétrique aux hooks Claude (defense in depth), avec une nuance :
-#   - lint + contract tests = BLOQUANTS (comme le hook Claude).
-#   - docs check = WARN-only (on ne force pas un humain à invoquer Claude).
+# .githooks/pre-commit: real git hook, human side.
+# Enable with: git config core.hooksPath .githooks
+# Mirrors the Claude hooks (defense in depth), with one nuance:
+#   - lint + contract tests = BLOCKING (like the Claude hook).
+#   - docs check = WARN-only (a human is not forced to invoke Claude).
 
 set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-# -------- 1) Spectral (bloquant) --------
-# NOTE: openapi/payments.yaml est volontairement imparfaite (use cases SECURE
-# et AUDIT). Elle est exclue du lint bloquant — les defauts plantes sont
-# justement ce que la demo doit faire trouver.
+# -------- 1) Spectral (blocking) --------
+# NOTE: openapi/payments.yaml is deliberately flawed (SECURE and AUDIT use
+# cases). It is excluded from the blocking lint: the planted defects are
+# exactly what the demo must surface.
 if ls openapi/*.yaml >/dev/null 2>&1 && command -v spectral >/dev/null 2>&1; then
   for spec in openapi/*.yaml; do
     case "$spec" in
@@ -25,7 +25,7 @@ if ls openapi/*.yaml >/dev/null 2>&1 && command -v spectral >/dev/null 2>&1; the
   done
 fi
 
-# -------- 2) Contract tests (bloquant) --------
+# -------- 2) Contract tests (blocking) --------
 if [ -f ./mvnw ]; then
   ./mvnw -q -Dtest='*ContractTest' test || {
     echo "[git pre-commit] contract tests failed" >&2
@@ -34,8 +34,8 @@ if [ -f ./mvnw ]; then
 fi
 
 # -------- 3) Docs check (WARN-only) --------
-# Si le commit touche un fichier "significatif" sans ADR/README staged, on
-# AVERTIT seulement — on ne bloque pas un dev qui sait ce qu'il fait.
+# If the commit touches a "significant" file without a staged ADR/README,
+# only WARN: do not block a developer who knows what they are doing.
 STAGED="$(git diff --staged --name-only)"
 significant=0
 docs=0
