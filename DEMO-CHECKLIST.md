@@ -6,7 +6,7 @@ criteria.
 
 ## Technical baseline (talking points)
 
-- **Spring Boot 3.5** + Java 21.
+- **Spring Boot 3.5** + Java 25.
 - **Hard contract-first** through `openapi-generator-maven-plugin` (7.26) on
   `openapi/payments.yaml`. The `PaymentsApi` / `PaymentMethodsApi` interfaces
   and every DTO are **generated** into `target/generated-sources/openapi/`.

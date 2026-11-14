@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   pom.xml: contract-first demo (France API 2026).
-  - Spring Boot 3.5.x (Java 21).
+  - Spring Boot 3.5.x (Java 25).
   - openapi-generator-maven-plugin generates the Java API interfaces and DTOs
     from openapi/payments.yaml. The hand-written code implements the interfaces.
   - If the spec changes, the build breaks until the code matches. That is
@@ -18,11 +18,11 @@
     </parent>
 
     <groupId>com.franceapi</groupId>
-    <artifactId>franceapi-demo</artifactId>
+    <artifactId>ai-survival-guide</artifactId>
     <version>1.0.0</version>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <openapi-generator.version>7.26.0</openapi-generator.version>
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
     </properties>

@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: franceapi-demo
+    name: ai-survival-guide
 
 management:
   endpoints:

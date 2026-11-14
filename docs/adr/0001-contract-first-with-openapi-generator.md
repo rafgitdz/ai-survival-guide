@@ -17,7 +17,7 @@ Level 1 is what we had until now. It depends entirely on reviewers catching spec
 
 Adopt `openapi-generator-maven-plugin` 7.10 in `interfaceOnly` mode on `openapi/payments.yaml`. Generated artifacts live under `target/generated-sources/openapi/com/franceapi/demo/generated/{api,dto}`. Controllers (`PaymentController`, `PaymentMethodController`) **implement** the generated API interfaces.
 
-Spring Boot 3.5, Java 21, `useJakartaEe=true`, `useSpringBoot3=true`.
+Spring Boot 3.5, Java 25, `useJakartaEe=true`, `useSpringBoot3=true`.
 
 ## Consequences
 

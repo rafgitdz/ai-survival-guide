@@ -11,7 +11,7 @@
 
 ## Runtime stack
 
-- **Java 21** (Homebrew OpenJDK or any JDK 21+).
+- **Java 25** (Homebrew OpenJDK or any JDK 25+).
 - **Spring Boot 3.5.0** (parent POM).
 - **Embedded Tomcat** on port `8080` by default (override with `--server.port=8090` on conflict).
 - **Exposed Actuator endpoints**: `/actuator/{health,info,prometheus,metrics}`.
@@ -151,7 +151,7 @@ git commit
 
 ## Maven / Spring naming conventions
 
-- `groupId` = `com.franceapi`, `artifactId` = `franceapi-demo`, `version` = `1.0.0`.
+- `groupId` = `com.franceapi`, `artifactId` = `ai-survival-guide`, `version` = `1.0.0`.
 - Default profile: none (`spring.profiles.active` unset, so "default").
 - Tests: no `@ActiveProfiles` (it caused a false failure of `/actuator/prometheus` in tests, see ADR-0001).
 

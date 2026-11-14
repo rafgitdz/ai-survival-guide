@@ -6,7 +6,7 @@
 The live demo of the talk given at Devoxx Belgium, France API and DevQuest.
 
 [![CI](https://github.com/rafgitdz/ai-survival-guide/actions/workflows/ci.yml/badge.svg)](https://github.com/rafgitdz/ai-survival-guide/actions/workflows/ci.yml)
-![Java 21](https://img.shields.io/badge/Java-21-orange)
+![Java 25](https://img.shields.io/badge/Java-25-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6db33f)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-6ba539)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-skills%20%C2%B7%20agents%20%C2%B7%20hooks%20%C2%B7%20MCP-d97757)

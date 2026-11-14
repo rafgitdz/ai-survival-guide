@@ -9,7 +9,7 @@
 
 ## 1. Stack and style
 
-- **Stack**: Spring Boot 3.x, Java 21, OpenAPI 3.1, Maven.
+- **Stack**: Spring Boot 3.x, Java 25, OpenAPI 3.1, Maven.
 - **API style**: REST, **contract-first**. The OpenAPI spec is the source of truth; Java code is generated from it or validated against it. Never code first.
 
 ## 2. Naming conventions
