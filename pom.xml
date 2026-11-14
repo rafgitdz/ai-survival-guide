@@ -103,9 +103,8 @@
                             <generateApiDocumentation>false</generateApiDocumentation>
                             <generateModelDocumentation>false</generateModelDocumentation>
                             <generateSupportingFiles>false</generateSupportingFiles>
-                            <!-- The spec is deliberately flawed (200 on error, etc.).
-                                 Spectral is the judge on the lint side; strict generator
-                                 validation is disabled here so the demo is not blocked. -->
+                            <!-- Spectral is the judge on the lint side; strict generator
+                                 validation is disabled here. -->
                             <skipValidateSpec>true</skipValidateSpec>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>

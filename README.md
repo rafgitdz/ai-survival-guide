@@ -32,10 +32,9 @@ to a real API:
 - **A contract the compiler enforces**: Java interfaces and DTOs are generated from the OpenAPI spec, so spec/code drift is a build error.
 
 > [!IMPORTANT]
-> The application is **deliberately vulnerable**. `openapi/payments.yaml` and
-> the controllers contain planted defects (mass assignment, BOLA, 200 on error,
-> missing tracing) for the agents to find. `prod-config/` and `secrets/` hold
-> fictitious honeypot values. Do not reuse this code as a template.
+> This is a teaching fixture, not production code. The spec and the controllers
+> contain defects for the agents to find, and `prod-config/` and `secrets/` hold
+> fictitious values. Do not reuse this code as a template.
 
 ## Quick start
 
@@ -55,20 +54,19 @@ Inside Claude Code, `/agents` shows the 2 subagents, `/skills` the 7 skills,
 
 ## The four demos
 
-The full script, with the prompts to paste and the checklist of what must
-happen, is in [`DEMO-CHECKLIST.md`](./DEMO-CHECKLIST.md).
+The presenter script (prompts to paste, expected findings) is kept outside the
+repository on purpose: the agents must discover the answers, not read them.
 
-| # | Use case | Driven by | The moment that matters |
-|---|---|---|---|
-| 1 | **DESIGN** a refunds endpoint from a ticket | `openapi-designer` | The database disagrees with the ticket: the agent **stops and asks** instead of inventing |
-| 2 | **EVOLVE** the payments API to v2 | `api-evolution-agent` + `breaking-change-detector` | The agent catches a MAJOR change published under `/v1`, then stops at the plan |
-| 3 | **SECURE** the API | `security-audit-agent` + `owasp-reviewer` + `secret-scrubber` | OWASP API Top 10 findings with severity and fix; reading `prod-config/` fails |
-| 4 | **AUDIT** consistency and observability | `openapi-consistency-auditor` + `obs-readiness-checker` | Metrics pass, tracing and structured logs fail, with the exact fix |
-| + | **Self-documenting commits** | `docs-curator` + pre-commit hook | The hook blocks a commit without an ADR, and the agent writes the ADR itself |
+| # | Use case | Driven by |
+|---|---|---|
+| 1 | **DESIGN** a refunds endpoint from a ticket | `openapi-designer` |
+| 2 | **EVOLVE** the payments API to v2 | `api-evolution-agent` + `breaking-change-detector` |
+| 3 | **SECURE** the API | `security-audit-agent` + `owasp-reviewer` + `secret-scrubber` |
+| 4 | **AUDIT** consistency and observability | `openapi-consistency-auditor` + `obs-readiness-checker` |
+| + | **Self-documenting commits** | `docs-curator` + pre-commit hook |
 
-A reference output for use case 1 is kept in
-[`examples/design-output/`](./examples/design-output/), outside `db/`, so the
-starting state of the demo stays intact. CI fails if the planted traps disappear.
+CI guards the starting state: `openapi/payments.yaml` must keep failing the
+blocking lint, otherwise the demo baseline has drifted.
 
 ## How it is wired
 
@@ -81,9 +79,9 @@ change that the code does not follow fails compilation, not a code review. See
 
 | Spec | Version | Role |
 |---|---|---|
-| `payments.yaml` | 1.0.0 | Source of the generated code. Contains the planted defects for the SECURE and AUDIT demos; excluded from the blocking lint |
-| `payments-v1.yaml` | 1.2.0 | Compliant baseline for the EVOLVE demo |
-| `payments-v2.yaml` | 1.3.0 (should be 2.0.0) | Candidate next version with three planted breaking changes |
+| `payments.yaml` | 1.0.0 | Source of the generated code. Demo baseline, excluded from the blocking lint |
+| `payments-v1.yaml` | 1.2.0 | Baseline for the EVOLVE demo |
+| `payments-v2.yaml` | 1.3.0 | Candidate next version, input of the EVOLVE demo |
 
 ### Skills (`.claude/skills/`)
 

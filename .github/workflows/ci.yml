@@ -45,11 +45,11 @@ jobs:
         with:
           node-version: "22"
       - run: npm install -g @stoplight/spectral-cli@6.17.0
-      # The demos only work if the planted traps are still there.
-      - name: payments.yaml must still fail the lint (planted defects)
+      # Guard: the demo baseline spec must keep failing the blocking lint.
+      - name: payments.yaml must still fail the lint (demo baseline)
         run: |
           if spectral lint --ruleset .spectral.yml --fail-severity=error openapi/payments.yaml; then
-            echo "::error::openapi/payments.yaml passes the lint: the planted defects of the SECURE/AUDIT demos are gone"
+            echo "::error::openapi/payments.yaml passes the lint: the demo baseline has drifted"
             exit 1
           fi
       - name: db/schema.sql must not contain a refunds table (DESIGN demo)

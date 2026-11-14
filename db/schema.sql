@@ -1,19 +1,6 @@
 -- db/schema.sql
--- Teaching fixture for the DESIGN use case.
---
--- Deliberately not a real Flyway/Liquibase migration (otherwise Spring Boot
--- auto-configures the DataSource and fails at startup). It is a DDL DUMP that
--- the skills must read to comply with AGENTS.md §6:
---   "never assume a database schema without reading it".
---
--- Traps planted to force a live "the agent asks a question" moment:
---   1) `amount_cents` (DB) vs `amount` (ticket API-1247)  → business vs technical naming
---   2) `currency_iso` (DB) vs `currency` (ticket)          → same
---   3) The `refunds` table DOES NOT EXIST. It is the subject of the ticket.
---      The agent must notice and propose a DDL, or ask.
---
--- Keep this file in its starting state: the expected output of the demo lives
--- in examples/design-output/.
+-- DDL dump of the payments service database (current production state).
+-- Not a Flyway/Liquibase migration: see docs/adr/0002.
 
 CREATE TABLE payments (
     id            UUID         PRIMARY KEY,

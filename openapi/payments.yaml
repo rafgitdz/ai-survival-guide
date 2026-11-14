@@ -1,23 +1,14 @@
 # openapi/payments.yaml
-# Planted defects (summary for the presenter):
-#  [API3 / mass-assignment]  PaymentCreateRequest exposes `status` and `userId` to the client.
-#  [API3 / leak]             Payment exposes `internalAccountId`, documented in no business example.
-#  [errors]                  POST /v1/payments returns 200 on a business error instead of a 422 Problem.
-#  [errors]                  The 400 response is not application/problem+json.
-#  [obs]                     No mention of /actuator/prometheus, no rate-limit headers.
-#  [naming]                  One path is camelCase (/v1/paymentMethods), violating AGENTS.md §2.
-#  [auth]                    GET /v1/payments/{id} requires no security (security: []) without justification.
 openapi: 3.1.0
 info:
   title: Payments API
   version: "1.0.0"
   description: |
-    France API 2026 demo: deliberately flawed spec.
+    Payments API of the FranceAPI platform.
 
 servers:
   - url: https://api.franceapi.example.com
 
-# Security applied globally, but overridden further down (planted bad practice).
 security:
   - bearerAuth: []
 
@@ -39,14 +30,12 @@ paths:
               $ref: '#/components/schemas/PaymentCreateRequest'
       responses:
         "200":
-          # PLANTED: returns 200 even on "insufficient funds". Should be 422.
           description: Payment created OR business error described in body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Payment'
         "400":
-          # PLANTED: not application/problem+json
           description: Bad request
           content:
             application/json:
@@ -63,7 +52,6 @@ paths:
       tags: [payments]
       summary: List payments
       operationId: listPayments
-      # PLANTED: no pagination → API4 Unrestricted Resource Consumption
       responses:
         "200":
           description: OK
@@ -81,7 +69,6 @@ paths:
       tags: [payments]
       summary: Get a payment
       operationId: getPayment
-      # PLANTED: security: [] without justification → sensitive endpoint exposed without auth (API2)
       security: []
       parameters:
         - name: paymentId
@@ -98,7 +85,6 @@ paths:
         "404":
           $ref: '#/components/responses/NotFound'
 
-  # PLANTED: camelCase naming instead of kebab-case → /v1/payment-methods
   /v1/paymentMethods:
     get:
       tags: [paymentMethods]
@@ -175,10 +161,9 @@ components:
         currency: { type: string, pattern: "^[A-Z]{3}$" }
 
     PaymentCreateRequest:
-      # PLANTED: mass assignment. `status`, `userId` and `internalAccountId` must NEVER be accepted as input.
       type: object
       required: [amount, currency]
-      additionalProperties: true   # PLANTED: must be false
+      additionalProperties: true
       properties:
         amount:            { type: integer }
         currency:          { type: string }
@@ -195,7 +180,6 @@ components:
         currency:          { type: string }
         status:            { type: string, enum: [PENDING, AUTHORIZED, CAPTURED, REFUNDED, FAILED] }
         createdAt:         { type: string, format: date-time }
-        # internalAccountId is RETURNED by the controller but MISSING here → mismatch (API3 + inconsistent spec)
       example:
         id: "8f1c0b62-9e15-4b8a-9c3a-2e7b8f7c0001"
         amount: 1999

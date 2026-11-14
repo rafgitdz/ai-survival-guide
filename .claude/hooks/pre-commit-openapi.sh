@@ -29,9 +29,8 @@ fail() {
 }
 
 # 1) Spectral lint on every OpenAPI spec under openapi/
-# NOTE: openapi/payments.yaml is deliberately flawed (SECURE and AUDIT use
-# cases). It is excluded from the blocking lint: the planted defects are
-# exactly what the demo must surface.
+# NOTE: openapi/payments.yaml is the demo baseline and is excluded from the
+# blocking lint (it is audited live by the SECURE and AUDIT use cases).
 if ls openapi/*.yaml >/dev/null 2>&1; then
   if command -v spectral >/dev/null 2>&1; then
     for spec in openapi/*.yaml; do

@@ -20,7 +20,7 @@ Ship the schema as a plain DDL file at `db/schema.sql`. Do **not** add Flyway / 
 
 - `./mvnw test` runs with no DB and no autoconfig surprise.
 - Skills can read the DDL with a single `Read` call — no tooling indirection.
-- The pedagogical traps in `db/schema.sql` (e.g. `amount_cents` vs ticket's `amount`, missing `refunds` table) stay in plain SQL where they read clearly during the live demo.
+- The schema stays in plain SQL, where a skill or a human reads it directly during the live demo.
 
 ### Negative
 
@@ -29,7 +29,7 @@ Ship the schema as a plain DDL file at `db/schema.sql`. Do **not** add Flyway / 
 
 ### Neutral
 
-- The file header documents this choice and the planted traps inline, so a reader who lands on it from a skill won't be surprised.
+- The file header documents this choice inline, so a reader who lands on it from a skill won't be surprised.
 
 ## Alternatives considered
 

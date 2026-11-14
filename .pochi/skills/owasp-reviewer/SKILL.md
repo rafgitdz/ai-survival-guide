@@ -19,7 +19,7 @@ description: Audits an OpenAPI spec AND the related Spring Boot code against the
 |---|---|---|---|
 | 1 | API1 | Broken Object Level Authorization (BOLA) | An `/things/{id}` endpoint that does not check the object belongs to the caller. |
 | 2 | API2 | Broken Authentication | JWT without `exp`/`iss`/`aud` checks, sensitive endpoints without `security`. |
-| 3 | API3 | Broken Object Property Level Authorization | Mass assignment, exposure of internal fields (`internalAccountId`, `isAdmin`). |
+| 3 | API3 | Broken Object Property Level Authorization | Mass assignment, exposure of internal fields (`internalLedgerId`, `isAdmin`). |
 | 4 | API4 | Unrestricted Resource Consumption | No pagination, no rate limit, no maximum requestBody size. |
 | 5 | API5 | Broken Function Level Authorization | Admin routes without a role check. |
 | 6 | API6 | Unrestricted Access to Sensitive Business Flows | No protection against replay (payment, signup). |
@@ -48,13 +48,13 @@ description: Audits an OpenAPI spec AND the related Spring Boot code against the
 
 ```
 ## OWASP API Security audit
-Scope: openapi/payments.yaml + src/main/java/com/franceapi/demo/**
+Scope: openapi/<spec>.yaml + src/main/java/**
 
 ### CRITICAL (n)
-[API3] Mass assignment on POST /v1/payments
-  Location: openapi/payments.yaml, PaymentCreateRequest
-  Evidence: schema accepts `status` and `userId` from the client
-  Fix: remove `status` and `userId` from PaymentCreateRequest; set status server-side; derive userId from JWT subject.
+[API3] Mass assignment on POST /v1/invoices
+  Location: openapi/invoices.yaml, InvoiceCreateRequest
+  Evidence: schema accepts `status` and `ownerId` from the client
+  Fix: remove `status` and `ownerId` from InvoiceCreateRequest; set status server-side; derive ownerId from JWT subject.
 
 ### HIGH (n)
 ...

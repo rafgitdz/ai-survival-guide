@@ -1,17 +1,9 @@
 # openapi/payments-v2.yaml
-# "After" spec for the EVOLVE use case.
-# CONTAINS DELIBERATE BREAKING CHANGES, to demonstrate breaking-change-detector:
-#   1. `amount` renamed to `value` in Payment                  → MAJOR (rename)
-#   2. `currency` goes from free string to a restricted enum   → MAJOR (type/constraint change)
-#   3. `createdAt` removed                                     → MAJOR (removal)
-#   4. New `status` query param on GET /v1/payments            → MINOR (optional add)
-#   5. 404 error format enriched with a `code` field           → PATCH/MINOR (additive)
-# The path is still /v1/... although the bump is MAJOR: that is exactly the trap
-# the detector must reveal (it must be published under /v2).
+# Candidate next version of the Payments API, submitted for review.
 openapi: 3.1.0
 info:
   title: Payments API
-  version: "1.3.0"   # PLANTED: should be 2.0.0 since there are MAJOR changes
+  version: "1.3.0"
 
 security:
   - bearerAuth: []

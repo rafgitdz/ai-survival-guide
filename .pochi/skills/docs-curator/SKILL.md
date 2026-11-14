@@ -122,8 +122,8 @@ Updated: README.md (sections: Decisions, API)
 Staged: 2 files.
 
 Summary:
-- ADR documents the removal of `status`/`userId`/`internalAccountId` from the
-  PaymentCreateRequest schema following the security audit.
+- ADR documents the removal of the client-writable `status`/`ownerId` fields from the
+  InvoiceCreateRequest schema following the security audit.
 - README "Decisions" list now references ADR-0007.
 
 Next: retry the commit. The pre-commit-docs-check hook will pass.

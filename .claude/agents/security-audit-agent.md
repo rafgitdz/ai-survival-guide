@@ -53,10 +53,10 @@ Release-blocking: yes/no
 - ...
 
 ### OWASP API Top 10 (from owasp-reviewer)
-- [API3 CRITICAL] Mass assignment on POST /v1/payments
-  Location: openapi/payments.yaml#/components/schemas/PaymentCreateRequest
-  Evidence: schema accepts `status` and `userId`
-  Fix: remove both fields; set status server-side; derive userId from JWT subject.
+- [API3 CRITICAL] Mass assignment on POST /v1/invoices
+  Location: openapi/invoices.yaml#/components/schemas/InvoiceCreateRequest
+  Evidence: schema accepts `status` and `ownerId`
+  Fix: remove both fields; set status server-side; derive ownerId from JWT subject.
 
 ### Spec consistency (from openapi-consistency-auditor)
 - ...

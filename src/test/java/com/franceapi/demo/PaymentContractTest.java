@@ -12,9 +12,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * Minimal contract tests: they check the invariants required by AGENTS.md §5.
- * For the demo, they target what the fixed spec and code SHOULD guarantee.
- * Some tests are deliberately marked TODO: they fail on the vulnerable version
- * and pass once security-audit-agent has applied its patches.
+ * Checks marked TODO are not enforced yet.
  */
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -56,12 +54,10 @@ class PaymentContractTest {
         given().when().get("/actuator/prometheus").then().statusCode(200);
     }
 
-    // TODO after remediation: this test must pass.
-    // A body with an undocumented field MUST be rejected (400 / 422, RFC 7807).
-    // Today it fails because the DTO accepts anything.
+    // TODO: a body with an undocumented field MUST be rejected (400 / 422, RFC 7807).
     //
     // @Test
-    // void createPayment_rejectsMassAssignmentFields() {
+    // void createPayment_rejectsUndocumentedFields() {
     //     given()
     //         .contentType("application/json")
     //         .body("{\"amount\":100,\"currency\":\"EUR\",\"status\":\"CAPTURED\",\"userId\":\"...\"}")

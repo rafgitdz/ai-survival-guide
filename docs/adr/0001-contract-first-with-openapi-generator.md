@@ -24,14 +24,14 @@ Spring Boot 3.5, Java 25, `useJakartaEe=true`, `useSpringBoot3=true`.
 ### Positive
 
 - Spec/code drift becomes a **compile error**, not a review finding.
-- The `internalAccountId` leak vulnerability described in the security audit is structurally prevented — the generator does not create a field absent from the schema.
+- A response leaking a field absent from the schema is structurally prevented — the generator does not create a field absent from the schema.
 - Generated DTOs carry validation annotations from the spec automatically (`@NotNull`, `@Pattern`, etc.).
 
 ### Negative
 
 - One more moving part in the build (generator version pin, occasional template surprises).
 - `target/generated-sources/` is invisible to IDE indexing until Maven runs once.
-- Some planted vulnerabilities (e.g. mass assignment) now live in the spec — the fix requires editing the YAML, not the Java. This is the intended pedagogy but represents a workflow change for Java-first developers.
+- Contract-level defects now live in the spec — the fix requires editing the YAML, not the Java. This is the intended pedagogy but represents a workflow change for Java-first developers.
 
 ### Neutral
 

@@ -23,7 +23,7 @@
 - **openapi-generator-maven-plugin 7.26** in `interfaceOnly` mode, on `openapi/payments.yaml` only.
   - Phase: `generate-sources`.
   - Output: `target/generated-sources/openapi/src/main/java/com/franceapi/demo/generated/{api,dto}/`.
-  - Key settings: `useSpringBoot3=true`, `useJakartaEe=true`, `useTags=true`, `skipDefaultInterface=true`, `openApiNullable=false`, `dateLibrary=java8`, `skipValidateSpec=true` (the spec is deliberately flawed for the demo).
+  - Key settings: `useSpringBoot3=true`, `useJakartaEe=true`, `useTags=true`, `skipDefaultInterface=true`, `openApiNullable=false`, `dateLibrary=java8`, `skipValidateSpec=true` (Spectral is the judge on the lint side).
 - **Spectral** (npm CLI `@stoplight/spectral-cli`) for OpenAPI linting. Ruleset in `.spectral.yml`.
 
 ## Java package topology
@@ -62,30 +62,23 @@ com.franceapi.demo.generated/    # GENERATED: read-only, never edit
 
 | File | Role | State |
 |---|---|---|
-| `openapi/payments.yaml` | Source of the generated Java code, and subject of the SECURE/AUDIT demos | **Deliberately flawed** (mass assignment, 200 on error, camelCase path, etc.) |
+| `openapi/payments.yaml` | Source of the generated Java code, and subject of the SECURE/AUDIT demos | Current version 1.0.0 |
 | `openapi/payments-v1.yaml` | "Before" reference for `breaking-change-detector` | Compliant with the rules, plus RFC 8594 `Deprecation`/`Sunset` headers |
-| `openapi/payments-v2.yaml` | "After" reference for `breaking-change-detector` | Contains 3 intentional breaking changes (rename, removal, enum restriction) |
+| `openapi/payments-v2.yaml` | "After" reference for `breaking-change-detector` | Candidate next version, pending review |
 
-**Important**: only `openapi/payments.yaml` is fed to `openapi-generator`. v1 and v2 are demo fixtures. The refunds spec does not exist yet: the DESIGN use case produces it live from `tickets/API-1247.md`.
+**Important**: only `openapi/payments.yaml` is fed to `openapi-generator`. v1 and v2 are demo fixtures. The DESIGN use case starts from `tickets/API-1247.md`.
 
 ## Fixture topology
 
 ```
 tickets/API-1247.md      # Fake Jira ticket describing POST /v1/refunds
-db/schema.sql            # DDL fixture with planted traps (amount_cents vs amount, currency_iso vs currency, missing refunds table)
-prod-config/, secrets/   # Honeypots: access blocked by permissions + hook
-examples/design-output/  # Reference output of the DESIGN use case, kept outside db/
+db/schema.sql            # DDL dump of the payments service database
+prod-config/, secrets/   # Fictitious values; access blocked by permissions + hook
 ```
 
 ## Observability
 
-| Dimension | Implementation | Demo status |
-|---|---|---|
-| **Prometheus metrics** | `micrometer-registry-prometheus` + `/actuator/prometheus` | ✅ OK |
-| **Distributed tracing** | No OTel/Zipkin bridge in `pom.xml` | ❌ Missing: surfaced by the AUDIT use case |
-| **Structured JSON logs** | No JSON encoder, minimal logback pattern | ❌ Missing: surfaced by the AUDIT use case |
-
-This is intentional: `obs-readiness-checker` must report `FAIL` during the demo and propose the fix.
+The three dimensions required by `AGENTS.md §7` (Prometheus metrics, distributed tracing, structured JSON logs) are assessed by the `obs-readiness-checker` skill from `pom.xml`, `application.yml` and the logback configuration.
 
 ## Claude Code stack
 
@@ -104,7 +97,7 @@ This is intentional: `obs-readiness-checker` must report `FAIL` during the demo 
 ## Git hooks (human side)
 
 - `.githooks/pre-commit`: mirror of the Claude hooks (defense in depth).
-  - Spectral blocking (except `payments.yaml`, excluded because deliberately flawed).
+  - Spectral blocking (except `payments.yaml`, the demo baseline, excluded from the blocking lint).
   - Contract tests blocking.
   - Docs check **warn-only** on the human side (a developer is not forced to invoke Claude).
 - Activation: `git config core.hooksPath .githooks`.
@@ -160,4 +153,3 @@ git commit
 - Binding rules: see `AGENTS.md`.
 - Architecture decisions with rationale: see `docs/adr/`.
 - Human onboarding: see `README.md`.
-- Walk-through of the 4 demo use cases: see `DEMO-CHECKLIST.md`.
