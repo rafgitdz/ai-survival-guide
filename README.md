@@ -133,6 +133,7 @@ others are placeholders showing where your own servers plug in.
 
 ADRs live in [`docs/adr/`](./docs/adr/), newest first:
 
+- [ADR-0007](./docs/adr/0007-publish-payments-v2-alongside-deprecated-v1.md): publish Payments API v2 under `/v2` alongside a deprecated v1 (sunset 2027-05-31)
 - [ADR-0006](./docs/adr/0006-docs-curator-and-self-documenting-commits.md): docs-curator skill + pre-commit hook, so every significant commit explains itself
 - [ADR-0005](./docs/adr/0005-permissions-deny-list-for-sensitive-paths.md): lock down sensitive paths with a deny list and a duplicate hook
 - [ADR-0004](./docs/adr/0004-mirror-claude-hooks-with-git-hooks.md): mirror the Claude hooks with git hooks (defense in depth)

@@ -4,7 +4,7 @@
 openapi: 3.1.0
 info:
   title: Payments API
-  version: "1.2.0"
+  version: "1.3.0"
 
 security:
   - bearerAuth: []
@@ -14,6 +14,7 @@ paths:
     get:
       summary: List payments
       operationId: listPayments
+      deprecated: true
       parameters:
         - name: limit
           in: query
@@ -21,6 +22,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            Deprecation: { $ref: '#/components/headers/Deprecation' }
+            Sunset: { $ref: '#/components/headers/Sunset' }
+            Link: { $ref: '#/components/headers/SuccessorLink' }
           content:
             application/json:
               schema:
@@ -33,6 +38,7 @@ paths:
     get:
       summary: Get a payment
       operationId: getPayment
+      deprecated: true
       parameters:
         - name: paymentId
           in: path
@@ -41,6 +47,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            Deprecation: { $ref: '#/components/headers/Deprecation' }
+            Sunset: { $ref: '#/components/headers/Sunset' }
+            Link: { $ref: '#/components/headers/SuccessorLink' }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Payment' }
@@ -50,6 +60,17 @@ paths:
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  headers:
+    Deprecation:
+      description: "RFC 9745: this API version is deprecated since 2026-11-30T00:00:00Z."
+      schema: { type: string, example: "@1795996800" }
+    Sunset:
+      description: "RFC 8594: this API version stops being served at this date."
+      schema: { type: string, example: "Mon, 31 May 2027 00:00:00 GMT" }
+    SuccessorLink:
+      description: "RFC 8288 link to the successor version of this resource."
+      schema: { type: string, example: '</v2/payments>; rel="successor-version"' }
 
   responses:
     Unauthorized:
