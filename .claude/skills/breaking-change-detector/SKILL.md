@@ -1,6 +1,6 @@
 ---
-name: breaking-change-detector
-description: Compares two OpenAPI specs (before and after) and lists EVERY breaking change with its severity (MAJOR/MINOR/PATCH per the repository Semver rule). Use before any merge on a spec, on a PR that changes a .yaml in openapi/, or to decide the version bump. Does NOT propose a patch: it is a detector, not a fixer.
+name: "breaking-change-detector"
+description: "Compares two OpenAPI specs (before and after) and lists EVERY breaking change with its severity (MAJOR/MINOR/PATCH per the repository Semver rule). Use before any merge on a spec, on a PR that changes a .yaml in openapi/, or to decide the version bump. Does NOT propose a patch: it is a detector, not a fixer."
 ---
 
 # breaking-change-detector

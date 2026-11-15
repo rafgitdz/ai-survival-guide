@@ -1,6 +1,6 @@
 ---
-name: obs-readiness-checker
-description: Checks that a Spring Boot API is observable as defined in AGENTS.md §7: Prometheus metrics exposed, distributed tracing configured, structured JSON logs. Outputs a report per dimension with evidence and fix. Use before every release, and systematically when a new route is added.
+name: "obs-readiness-checker"
+description: "Checks that a Spring Boot API is observable as defined in AGENTS.md §7: Prometheus metrics exposed, distributed tracing configured, structured JSON logs. Outputs a report per dimension with evidence and fix. Use before every release, and systematically when a new route is added."
 ---
 
 # obs-readiness-checker

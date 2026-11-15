@@ -1,6 +1,6 @@
 ---
-name: openapi-designer
-description: Designs or extends an OpenAPI 3.1 spec that strictly follows the repository rules (kebab-case, /v1, JWT, RFC 7807, observability). Use whenever a new endpoint or resource must be created, or a product ticket must become an API contract. NEVER generates Java code: only the spec and its diff.
+name: "openapi-designer"
+description: "Designs or extends an OpenAPI 3.1 spec that strictly follows the repository rules (kebab-case, /v1, JWT, RFC 7807, observability). Use whenever a new endpoint or resource must be created, or a product ticket must become an API contract. NEVER generates Java code: only the spec and its diff."
 ---
 
 # openapi-designer
