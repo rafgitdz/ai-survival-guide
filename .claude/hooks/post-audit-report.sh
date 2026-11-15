@@ -6,14 +6,16 @@
 #   2) If the environment has a real integration (MCP issue tracker, gh CLI),
 #      open one issue per CRITICAL/HIGH finding.
 #
-# The hook receives the Claude Code subagent-stop JSON:
-# { "subagent_name": "...", "transcript_path": "...", ... }
+# The hook receives the Claude Code SubagentStop JSON (Claude Code 2.1):
+# { "agent_type": "security-audit-agent", "agent_id": "...",
+#   "last_assistant_message": "<final report>", "transcript_path": "...", ... }
 
 set -uo pipefail
 
 INPUT="$(cat)"
-SUBAGENT="$(printf '%s' "$INPUT" | jq -r '.subagent_name // .agent_name // ""')"
-TRANSCRIPT="$(printf '%s' "$INPUT" | jq -r '.transcript_path // ""')"
+SUBAGENT="$(printf '%s' "$INPUT" | jq -r '.agent_type // .subagent_name // .agent_name // ""')"
+TRANSCRIPT="$(printf '%s' "$INPUT" | jq -r '.agent_transcript_path // .transcript_path // ""')"
+LAST_MESSAGE="$(printf '%s' "$INPUT" | jq -r '.last_assistant_message // ""')"
 
 # Only act for our agent
 if [ "$SUBAGENT" != "security-audit-agent" ]; then
@@ -31,8 +33,11 @@ OUT="docs/audits/audit-$TS.md"
   echo ""
   echo "_Captured automatically by post-audit-report hook from subagent \`security-audit-agent\`._"
   echo ""
-  if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
-    # On extrait le dernier message assistant du transcript JSONL.
+  if [ -n "$LAST_MESSAGE" ]; then
+    # Claude Code hands the final report directly (preferred: the transcript may lag).
+    printf '%s\n' "$LAST_MESSAGE"
+  elif [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
+    # Fallback: extract the last assistant message from the JSONL transcript.
     jq -r 'select(.type=="assistant" or .role=="assistant") | .message.content // .content // empty
            | if type=="array" then map(.text // empty) | join("\n") else . end' \
        "$TRANSCRIPT" 2>/dev/null | tail -n 400
