@@ -66,12 +66,13 @@ com.franceapi.demo.generated/    # GENERATED: read-only, never edit
 | `openapi/payments-v1.yaml` | "Before" reference for `breaking-change-detector` | Compliant with the rules, plus RFC 8594 `Deprecation`/`Sunset` headers |
 | `openapi/payments-v2.yaml` | "After" reference for `breaking-change-detector` | Candidate next version, pending review |
 
-**Important**: only `openapi/payments.yaml` is fed to `openapi-generator`. v1 and v2 are demo fixtures. The DESIGN use case starts from `tickets/API-1247.md`.
+**Important**: only `openapi/payments.yaml` is fed to `openapi-generator`. v1 and v2 are demo fixtures. The DESIGN use case starts from `tickets/API-1247.md`, the EVOLVE use case from `tickets/API-1302.md`.
 
 ## Fixture topology
 
 ```
-tickets/API-1247.md      # Fake Jira ticket describing POST /v1/refunds
+tickets/API-1247.md      # Fake Jira ticket describing POST /v1/refunds (DESIGN)
+tickets/API-1302.md      # Fake Jira ticket asking to publish the Payments API v2 (EVOLVE)
 db/schema.sql            # DDL dump of the payments service database
 prod-config/, secrets/   # Fictitious values; access blocked by permissions + hook
 ```
