@@ -49,8 +49,9 @@ npm install -g @stoplight/spectral-cli      # spec linter used by the hooks
 claude                                      # start Claude Code in the repo
 ```
 
-Inside Claude Code, `/agents` shows the 2 subagents, `/skills` the 7 skills,
-`/hooks` the 5 hooks and `/mcp` the 4 MCP servers.
+Inside Claude Code, `/skills` shows the 7 skills, `/hooks` the 5 hooks and
+`/mcp` the 4 MCP servers. The 2 subagents are the files under `.claude/agents/`
+(the `/agents` wizard was removed in Claude Code 2.1).
 
 ## The four demos
 
