@@ -11,6 +11,7 @@
     // MCP server exposing Jira-like tickets (placeholder package).
     // Provide JIRA_BASE_URL and JIRA_TOKEN through the environment, never hard-coded.
     "tickets": {
+      "disabled": true,
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-everything-tickets"],
       "env": {
@@ -22,7 +23,7 @@
     // Official git MCP server: history, diffs, blame.
     // Read-only for the demo (no commit through MCP).
     "git": {
-      "command": "uvx",
+      "command": "/opt/homebrew/bin/uvx",
       "args": ["mcp-server-git", "--repository", "."]
     },
 
@@ -30,6 +31,7 @@
     // Used by openapi-designer and owasp-reviewer so that they NEVER invent
     // a field (see AGENTS.md §6).
     "db-schema": {
+      "disabled": true,
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-postgres-readonly"],
       "env": {
@@ -43,6 +45,7 @@
     // on the *ContractTest suite and returns a structured report.
     // The referenced binary is a placeholder: replace it with the real implementation.
     "contract-test-runner": {
+      "disabled": true,
       "command": "node",
       "args": ["./mcp/contract-test-runner/index.js"],
       "env": {
