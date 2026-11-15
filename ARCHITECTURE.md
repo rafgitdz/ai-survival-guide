@@ -63,7 +63,7 @@ com.franceapi.demo.generated/    # GENERATED: read-only, never edit
 | File | Role | State |
 |---|---|---|
 | `openapi/payments.yaml` | Source of the generated Java code, and subject of the SECURE/AUDIT demos | Current version 1.0.0 |
-| `openapi/payments-v1.yaml` | "Before" reference for `breaking-change-detector` | Compliant with the rules, plus RFC 8594 `Deprecation`/`Sunset` headers |
+| `openapi/payments-v1.yaml` | "Before" reference for `breaking-change-detector` | Version in production (1.2.0) |
 | `openapi/payments-v2.yaml` | "After" reference for `breaking-change-detector` | Candidate next version, pending review |
 
 **Important**: only `openapi/payments.yaml` is fed to `openapi-generator`. v1 and v2 are demo fixtures. The DESIGN use case starts from `tickets/API-1247.md`, the EVOLVE use case from `tickets/API-1302.md`.
