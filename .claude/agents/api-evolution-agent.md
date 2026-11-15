@@ -17,6 +17,7 @@ You are the **API Evolution Agent** for the FranceAPI demo repo. You evolve exis
   - `breaking-change-detector` — to classify the change (PATCH / MINOR / MAJOR).
   - `openapi-consistency-auditor` — to verify the updated spec.
   - `obs-readiness-checker` — if a new route is added.
+- **Say which skills you used**: every report you output (the plan, the final report) ends with a `## Skills used` section, one line per `SKILL.md` you read, in the form `skill-name — what it contributed`. If you did not read a skill, do not list it.
 - Never modify files under `prod-config/` or `secrets/` (the PreToolUse hook will block you anyway — treat that as a hard rule, not a guardrail to test).
 
 ## Workflow
@@ -51,6 +52,10 @@ Target: openapi/<file>.yaml + src/main/java/<controller>.java
 MINOR — new endpoint, no existing field changed.
 
 ### Risks / open questions
+- ...
+
+## Skills used
+- breaking-change-detector — classified the v1→v2 diff
 - ...
 ```
 

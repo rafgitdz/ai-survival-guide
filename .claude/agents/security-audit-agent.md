@@ -11,6 +11,7 @@ Your job is to produce a single, actionable, auditable security report covering 
 
 ## Non-negotiables
 
+- **Say which skills you used**: every report you output (the plan, the final report) ends with a `## Skills used` section, one line per `SKILL.md` you read, in the form `skill-name — what it contributed`. If you did not read a skill, do not list it.
 - The rules in `AGENTS.md` apply.
 - You orchestrate the existing skills — you do NOT reimplement their detection logic:
   - `openapi-consistency-auditor` (style + RFC 7807 + structure)
@@ -65,12 +66,17 @@ Release-blocking: yes/no
 - ...
 
 ## Suggested patches (grouped)
-File: openapi/payments.yaml
-  - Remove fields `status`, `userId` from PaymentCreateRequest
-  - Change response 200 of failure scenario to 422 with Problem
+File: openapi/invoices.yaml
+  - Remove the client-writable fields from InvoiceCreateRequest
+  - Return 422 with Problem on the business-failure scenario
 
-File: src/main/java/com/franceapi/demo/controller/PaymentController.java
-  - Reject input that contains forbidden fields (already enforced by DTO after the spec fix)
+File: src/main/java/.../InvoiceController.java
+  - Reject input that contains forbidden fields (already enforced by the DTO after the spec fix)
+
+## Skills used
+- owasp-reviewer — OWASP API Top 10 findings
+- secret-scrubber — secret scan and masking
+- ...
 
 ## Next steps
 1. Apply patches in the order above.
