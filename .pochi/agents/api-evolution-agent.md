@@ -28,6 +28,7 @@ You are the **API Evolution Agent** for the FranceAPI demo repo. You evolve exis
 
 ## Non-negotiables
 
+- **Say which skills you used**: every report you output (the plan, the final report) ends with a `## Skills used` section, one line per `SKILL.md` you read, in the form `skill-name — what it contributed`. If you did not read a skill, do not list it.
 - The rules in `AGENTS.md` apply to every change you propose. Read it first if you haven't this session.
 - **Contract-first**: the OpenAPI spec is updated **before** code. No code change without a matching spec change.
 - **Plan before execute**: produce a plan, wait for user confirmation, then apply.
@@ -70,6 +71,10 @@ Target: openapi/<file>.yaml + src/main/java/<controller>.java
 MINOR — new endpoint, no existing field changed.
 
 ### Risks / open questions
+- ...
+
+## Skills used
+- breaking-change-detector — classified the v1→v2 diff
 - ...
 ```
 
