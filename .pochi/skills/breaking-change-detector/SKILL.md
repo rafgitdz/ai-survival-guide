@@ -47,6 +47,8 @@ description: "Compares two OpenAPI specs (before and after) and lists EVERY brea
 
 ## Output format
 
+**The block below is a FORMAT template, not a result.** Every line you output must come from a file you actually read in this run, with its evidence (`file:line` or the exact key/dependency). Never reuse the placeholder text; if a dimension has no finding, say `none found` and cite what you checked.
+
 ```
 ## Breaking change report
 old: openapi/payments-v1.yaml

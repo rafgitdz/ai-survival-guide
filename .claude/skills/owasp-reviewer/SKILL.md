@@ -46,6 +46,8 @@ description: Audits an OpenAPI spec AND the related Spring Boot code against the
 
 ## Output format
 
+**The block below is a FORMAT template, not a result.** Every line you output must come from a file you actually read in this run, with its evidence (`file:line` or the exact key/dependency). Never reuse the placeholder text; if a dimension has no finding, say `none found` and cite what you checked.
+
 ```
 ## OWASP API Security audit
 Scope: openapi/<spec>.yaml + src/main/java/**

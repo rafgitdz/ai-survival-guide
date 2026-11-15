@@ -41,6 +41,13 @@ Expected evidence:
 - The `traceId` and `spanId` MDC fields are injected into every log line (check the logback pattern).
 - No `log.info(payload)` on an entity that may contain PII or secrets; delegate doubtful fields to `secret-scrubber`.
 
+**Verdict rules (mechanical, no judgement call):**
+
+- **A is OK** only if `micrometer-registry-prometheus` is in `pom.xml` AND `prometheus` is in `management.endpoints.web.exposure.include`.
+- **B is OK** only if `pom.xml` declares a tracing bridge (`micrometer-tracing-bridge-otel` or `-brave`) AND an exporter. `management.tracing.*` properties alone, without the dependencies, mean **B is MISSING**: Spring Boot ignores them.
+- **C is OK** only if a JSON encoder or `logging.structured.format.*` is configured. A `logging.pattern.console` line, even with `traceId`/`spanId`, is plain text, so **C is MISSING**.
+- You must quote the `pom.xml` line (or state its absence after reading the whole file) for A and B. Configuration files are never sufficient evidence on their own.
+
 ## Workflow
 
 1. **List**: `pom.xml`, `application*.yml`, `logback*.xml`, `SecurityConfig`, controllers.
@@ -50,21 +57,21 @@ Expected evidence:
 
 ## Output format
 
+**The block below is a FORMAT template, not a result.** Every line you output must come from a file you actually read in this run, with its evidence (`file:line` or the exact key/dependency). Never reuse the placeholder text; if a dimension has no finding, say `none found` and cite what you checked.
+
 ```
 ## Observability readiness
-Scope: pom.xml, src/main/resources/**, src/main/java/com/franceapi/demo/**
+Scope: <files actually read>
 
 ### A. Metrics (Prometheus)
-- [MISSING] micrometer-registry-prometheus not in pom.xml → add dependency.
-- [MISSING] management.endpoints.web.exposure.include does not list 'prometheus' → set to 'health,info,prometheus,metrics'.
+- [<OK | MISSING>] <dependency or property checked> (evidence: <file:line>) → <fix if missing>
 
 ### B. Tracing
-- [OK] micrometer-tracing-bridge-otel present.
-- [MISSING] management.tracing.sampling.probability not set → set to 1.0 in dev, 0.1 in prod.
+- [<OK | MISSING>] <dependency or property checked> (evidence: <file:line>) → <fix if missing>
 
 ### C. Structured logs
-- [MISSING] No JSON encoder → add logstash-logback-encoder + logback-spring.xml with JSON pattern.
+- [<OK | MISSING>] <encoder or config checked> (evidence: <file:line>) → <fix if missing>
 
 ### Verdict
-FAIL: A, B (partial), C missing. Not release-ready per AGENTS.md §7.
+<PASS | FAIL>: <which dimensions are OK / missing>. <one sentence per AGENTS.md §7>
 ```

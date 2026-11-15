@@ -51,20 +51,21 @@ description: Audits an OpenAPI spec for internal consistency and compliance with
 
 ## Output format
 
+**The block below is a FORMAT template, not a result.** Every line you output must come from a file you actually read in this run, with its evidence (`file:line` or the exact key/dependency). Never reuse the placeholder text; if a dimension has no finding, say `none found` and cite what you checked.
+
 ```
 ## OpenAPI consistency audit
-File: openapi/payments.yaml
+File: <spec path>
 
-### ERROR (n)
-- [naming] /v1/Payments: path is not kebab-case → rename to /v1/payments
-- [errors] POST /v1/payments: response 200 declared for failure scenario "insufficient funds" → use 422 with Problem schema
+### ERROR (<n>)
+- [<category>] <operation or schema>: <what is wrong> (evidence: <file:line>) → <fix>
 
-### WARN (n)
-- [examples] Payment schema: `createdAt` is declared but appears in no example → add a value in the GET response example
+### WARN (<n>)
+- [<category>] <location>: <what is wrong> (evidence: <file:line>) → <fix>
 
-### INFO (n)
-- [obs] No mention of /actuator/prometheus in the spec → consider documenting metrics tags
+### INFO (<n>)
+- [<category>] <location>: <observation> → <suggestion>
 
 ### Verdict
-FAIL: 2 errors. Spec is not release-ready.
+<PASS | FAIL>: <n> errors, <n> warnings. <one sentence>
 ```

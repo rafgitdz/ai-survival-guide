@@ -111,6 +111,8 @@ The hook scopes this — but the skill must agree, so they stay in sync. A chang
 
 ## Output format
 
+**The block below is a FORMAT template, not a result.** Every line you output must come from a file you actually read in this run, with its evidence (`file:line` or the exact key/dependency). Never reuse the placeholder text; if a dimension has no finding, say `none found` and cite what you checked.
+
 ### Mode A (diff-driven)
 
 ```
