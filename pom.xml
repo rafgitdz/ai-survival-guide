@@ -24,7 +24,7 @@
     <properties>
         <java.version>25</java.version>
         <openapi-generator.version>7.26.0</openapi-generator.version>
-        <swagger-annotations.version>2.2.55</swagger-annotations.version>
+        <swagger-annotations.version>2.2.56</swagger-annotations.version>
     </properties>
 
     <dependencies>
